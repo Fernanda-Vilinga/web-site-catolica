@@ -47,10 +47,10 @@ const App: React.FC = () => {
               <p>Conteúdo...</p>
             </ModalBody>
             <ModalFooter>
-              <Button variant="solid" mr={3} onClick={onClose}>
+              <Button variant="outline" mr={3} onClick={onClose}>
                 Salvar como rascunho
               </Button>
-              <Button variant="outline" onClick={() => console.log('Adicionar')}>
+              <Button variant="solid" onClick={() => console.log('Adicionar')}>
                 Salvar e publicar
               </Button>
             </ModalFooter>

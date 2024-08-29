@@ -26,5 +26,9 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
-  }
+  },
+  "description": "<<<<<<< HEAD\r # web-site-catolica\r Este site é de carácter religioso!\r =======\r # React + TypeScript + Vite",
+  "main": "eslint.config.js",
+  "author": "",
+  "license": "ISC"
 }

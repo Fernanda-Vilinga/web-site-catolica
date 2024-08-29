@@ -2,8 +2,10 @@ import { extendTheme } from '@chakra-ui/react';
 
 const theme = extendTheme({
   colors: {
-    buttonDark: '#3E2723',  
-    buttonLight: '#6D4C41', 
+    buttonSolid: '#6F3B52', // Cor para botões sólidos
+    buttonLight: '#4D1A3B', // Cor mais clara para botões sólidos em hover/active
+    buttonDarker: '#333333', // Cor preta descarregada para botões com outline
+    buttonOutlineBorder: '#333333', // Cor da borda para botões com outline
   },
   components: {
     Button: {
@@ -12,7 +14,7 @@ const theme = extendTheme({
       },
       variants: {
         solid: {
-          bg: 'buttonDark',
+          bg: 'buttonSolid',
           color: 'white',
           _hover: {
             bg: 'buttonLight',
@@ -22,10 +24,11 @@ const theme = extendTheme({
           },
         },
         outline: {
-          borderColor: 'buttonDark',
-          color: 'buttonDark',
+          bg: 'buttonDarker',
+          borderColor: 'buttonDarker',
+          color: 'white',
           _hover: {
-            bg: 'buttonLight',
+            bg: 'buttonDarker',
             color: 'white',
           },
         },
@@ -35,8 +38,9 @@ const theme = extendTheme({
   styles: {
     global: {
       body: {
-        bg: '#E0E0E0', 
-        color: 'black', 
+        bg: 'gray.200', // Cor de fundo do body
+        color: 'black', // Cor do texto padrão
+        fontFamily: 'Roboto, sans-serif', // Define a fonte Roboto como padrão
       },
     },
   },
