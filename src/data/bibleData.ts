@@ -1,4 +1,3 @@
-// src/data/bibleData.ts
 import ptNviData from './pt_nvi.json';
 
 export interface BibleBook {
