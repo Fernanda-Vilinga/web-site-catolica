@@ -19,30 +19,30 @@ import {
   MdDelete
 } from 'react-icons/md';
 import Header from './HearderUI';
-import AdicionarVersiculo from './AdicionarVersiculo';
-import { getDrafts, addDraft, updateDraft, deleteDraft } from '../dao/indexedDBDraftDAO'; // IndexedDB
-import { collection, getDocs, addDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore'; // Firestore
-import { db } from '../dao/firestorePostDAO';
+import AdicionarVersiculo from './AdicionarVersiculoUI';
+import { 
+  fetchData, 
+  saveOrUpdateDraft, 
+  publishPost, 
+  deleteDraftById, 
+  deletePostById 
+} from '../repositorios/AppRepositorios';
 
-// Cores e estilos
-const headerBgColor = '#F5F5F5';
 
 interface Post {
   id?: string;
+  passage: string;
   text: string;
-  image: string; // Base64 string
+  image?: string;
+  createdAt?: Date;
   likes?: number;
   comments?: number;
-  passage: string;
-  book?: string;
-  chapter?: number;
-  verse?: number;
-  createdAt?: Date; // Always Date
 }
+
+const headerBgColor = '#F5F5F5';
 
 const formatDate = (date: Date | undefined) => {
   if (!date) return 'Data inválida';
-
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -67,94 +67,15 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const draftsList = await getDrafts();
-        setDrafts(draftsList
-          .map(draft => ({
-            ...draft,
-            createdAt: draft.createdAt instanceof Date ? draft.createdAt : new Date(draft.createdAt),
-          }))
-          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-        );
-
-        const postsCollection = collection(db, 'posts');
-        const postsSnapshot = await getDocs(postsCollection);
-        const postsList = postsSnapshot.docs
-          .map(doc => {
-            const data = doc.data() as Post;
-            return { id: doc.id, ...data, createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt) };
-          })
-          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-        setPosts(postsList);
-        setFirestoreStatus('Conectado');
-      } catch (error) {
-        setFirestoreStatus('Erro ao conectar ao Firestore');
-        console.error('Erro ao conectar ao Firestore:', error);
-      }
-    };
-
-    fetchData();
+    fetchData(setDrafts, setPosts, setFirestoreStatus);
   }, []);
 
-  const handleSaveOrUpdate = async (draft: Post) => {
-    try {
-      const draftWithDefaults = {
-        ...draft,
-        createdAt: draft.createdAt || new Date(),
-        book: draft.book || '',
-        chapter: draft.chapter || 0,
-        verse: draft.verse || 0,
-        text: draft.text || '',
-        image: draft.image || '', // Ensure the image is in Base64 format
-      };
-
-      if (draft.id) {
-        await updateDraft(draft.id, draftWithDefaults);
-        setDrafts(prevDrafts =>
-          prevDrafts
-            .map(d => d.id === draft.id ? draftWithDefaults : d)
-            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-        );
-      } else {
-        const id = await addDraft(draftWithDefaults);
-        setDrafts(prevDrafts =>
-          [...prevDrafts, { ...draftWithDefaults, id }]
-            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-        );
-      }
-      setActiveTab('drafts');
-      setEditingDraft(null);
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Erro ao salvar rascunho: ', error);
-    }
+  const handleSaveOrUpdate = (draft: Post) => {
+    saveOrUpdateDraft(draft, setDrafts, setActiveTab, setEditingDraft, setIsModalOpen);
   };
 
-  const handlePublish = async (post: Post) => {
-    try {
-      const postWithDefaults = {
-        ...post,
-        createdAt: Timestamp.fromDate(new Date()),
-        book: post.book || '',
-        chapter: post.chapter || 0,
-        verse: post.verse || 0,
-        text: post.text || '',
-        image: post.image || '', // Ensure the image is in Base64 format
-      };
-
-      const postsCollection = collection(db, 'posts');
-      await addDoc(postsCollection, postWithDefaults);
-
-      setPosts(prevPosts =>
-        [...prevPosts, { ...postWithDefaults, createdAt: new Date() }]
-          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-      );
-      setActiveTab('posts');
-    } catch (error) {
-      console.error('Erro ao publicar: ', error);
-    }
+  const handlePublish = (post: Post) => {
+    publishPost(post, setPosts, setActiveTab);
   };
 
   const handleEditDraft = (draft: Post) => {
@@ -162,31 +83,12 @@ const App: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteDraft = async (draftId: string) => {
-    try {
-      await deleteDraft(draftId);
-      setDrafts(prevDrafts =>
-        prevDrafts
-          .filter(draft => draft.id !== draftId)
-          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-      );
-    } catch (error) {
-      console.error('Erro ao deletar rascunho:', error);
-    }
+  const handleDeleteDraft = (draftId: string) => {
+    deleteDraftById(draftId, setDrafts);
   };
 
-  const handleDeletePost = async (postId: string) => {
-    try {
-      const postRef = doc(db, 'posts', postId);
-      await deleteDoc(postRef);
-      setPosts(prevPosts =>
-        prevPosts
-          .filter(post => post.id !== postId)
-          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-      );
-    } catch (error) {
-      console.error('Erro ao deletar publicação:', error);
-    }
+  const handleDeletePost = (postId: string) => {
+    deletePostById(postId, setPosts);
   };
 
   const handleOpenAddVersiculo = () => {
@@ -194,7 +96,6 @@ const App: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Função para converter arquivos para Base64
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -241,7 +142,7 @@ const App: React.FC = () => {
             draft={editingDraft}
             onSaveDraft={handleSaveOrUpdate}
             onPublish={handlePublish}
-            onImageChange={handleImageChange} // Adicione a prop para lidar com mudanças de imagem
+            onImageChange={handleImageChange}
           />
         </Box>
 
@@ -258,7 +159,7 @@ const App: React.FC = () => {
                 <Tab>Rascunhos</Tab>
                 <Tab>Publicações</Tab>
               </TabList>
-                           <TabPanels>
+              <TabPanels>
                 <TabPanel>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {drafts.length === 0 ? (
@@ -286,7 +187,7 @@ const App: React.FC = () => {
                               borderRadius="md"
                             >
                               <img
-                                src={draft.image} // Exibindo a imagem Base64
+                                src={draft.image}
                                 alt={`Imagem do rascunho`}
                                 style={{
                                   width: '100%',
@@ -435,7 +336,7 @@ const App: React.FC = () => {
                               borderRadius="md"
                             >
                               <img
-                                src={post.image} // Exibindo a imagem Base64
+                                src={post.image}
                                 alt={`Imagem da publicação`}
                                 style={{
                                   width: '100%',
@@ -567,4 +468,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

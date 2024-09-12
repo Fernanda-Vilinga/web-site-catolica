@@ -16,19 +16,8 @@ import {
 } from '@chakra-ui/react';
 import { MdFavoriteBorder, MdMessage } from 'react-icons/md';
 import { getBibleData, BibleBook } from '../data/bibleData';
-import defaultImage from '../assets/paisagem.jpeg'; // Importando a imagem padrão
-import { db } from '../dao/firestorePostDAO'; // Certifique-se de que você está importando a instância do Firestore corretamente
-import { addDoc, collection } from 'firebase/firestore';
-
-interface Post {
-  text: string;
-  image: string; // Imagem como string Base64
-  book: string;
-  chapter: number;
-  verse: number;
-  passage: string;
-  createdAt?: Date;
-}
+import defaultImage from '../assets/paisagem.jpeg'; 
+import { Post, saveDraft, publishPost } from '../repositorios/AdicionarVersiculoRepositorios';
 
 interface AdicionarVersiculoProps {
   isOpen: boolean;
@@ -46,7 +35,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   onPublish,
 }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>(defaultImage);
+  const [imagePreview, setImagePreview] = useState<string>('');
   const [selectedText, setSelectedText] = useState<string>('');
   const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
@@ -60,9 +49,9 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   }, []);
 
   useEffect(() => {
-    if (selectedBook) {
-      const book = bibleBooks.find((book) => book.name === selectedBook);
-      setChapters(book ? book.chapters.map((_, index) => `Capítulo ${index + 1}`) : []);
+    const book = bibleBooks.find((book) => book.name === selectedBook);
+    if (book) {
+      setChapters(book.chapters.map((_, index) => `Capítulo ${index + 1}`));
       setSelectedChapter(1);
       setSelectedVerse(1);
       setVerses([]);
@@ -70,20 +59,44 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   }, [selectedBook, bibleBooks]);
 
   useEffect(() => {
-    if (selectedChapter) {
-      const book = bibleBooks.find((book) => book.name === selectedBook);
-      setVerses(book?.chapters[selectedChapter - 1].map((_, index) => `Versículo ${index + 1}`) || []);
+    const book = bibleBooks.find((book) => book.name === selectedBook);
+    if (book) {
+      setVerses(book.chapters[selectedChapter - 1]?.map((_, index) => `Versículo ${index + 1}`) || []);
       setSelectedVerse(1);
     }
   }, [selectedChapter, selectedBook, bibleBooks]);
 
   useEffect(() => {
-    if (selectedVerse && selectedChapter && selectedBook) {
-      const book = bibleBooks.find((book) => book.name === selectedBook);
-      const versesList = book?.chapters[selectedChapter - 1] || [];
+    const book = bibleBooks.find((book) => book.name === selectedBook);
+    if (book && selectedChapter && selectedVerse) {
+      const versesList = book.chapters[selectedChapter - 1] || [];
       setSelectedText(versesList[selectedVerse - 1] || '');
     }
   }, [selectedVerse, selectedChapter, selectedBook, bibleBooks]);
+
+  // Função para converter uma imagem para base64
+  const convertToBase64 = (file: File, callback: (base64String: string) => void) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      callback(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+ 
+  const initializeDefaultImage = () => {
+    fetch(defaultImage)
+      .then((response) => response.blob())
+      .then((blob) => {
+        convertToBase64(blob as File, (base64String) => {
+          setImagePreview(base64String);
+        });
+      });
+  };
+
+  useEffect(() => {
+    initializeDefaultImage(); 
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -92,7 +105,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
         setSelectedChapter(draft.chapter || 1);
         setSelectedVerse(draft.verse || 1);
         setSelectedText(draft.text || '');
-        setImagePreview(draft.image || defaultImage);
+        setImagePreview(draft.image || imagePreview);
         setSelectedImage(null);
       } else {
         resetForm();
@@ -104,20 +117,18 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
     const file = event.target.files?.[0] || null;
     if (file) {
       setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String); // Atualiza a pré-visualização da imagem
-      };
-      reader.readAsDataURL(file); // Converte o arquivo para string Base64
+      convertToBase64(file, (base64String) => {
+        setImagePreview(base64String);
+      });
     } else {
-      setImagePreview(defaultImage);
+      initializeDefaultImage(); // Reverter para a imagem padrão se a imagem carregada for removida
     }
   };
 
-  const handleSelectChange = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, parser: (value: string) => T) => (event: ChangeEvent<HTMLSelectElement>) => {
-    setter(parser(event.target.value));
-  };
+  const handleSelectChange = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, parser: (value: string) => T) => 
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      setter(parser(event.target.value));
+    };
 
   const getFormattedReference = () => {
     if (selectedBook && selectedChapter && selectedVerse) {
@@ -130,7 +141,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   const handleSaveDraft = async () => {
     const updatedDraft: Post = {
       text: selectedText || 'Texto do versículo',
-      image: imagePreview, // String Base64 da imagem
+      image: imagePreview,
       book: selectedBook,
       chapter: selectedChapter,
       verse: selectedVerse,
@@ -138,13 +149,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
       createdAt: new Date(),
     };
 
-    try {
-      const docRef = await addDoc(collection(db, 'drafts'), updatedDraft);
-      console.log('Draft salvo com ID:', docRef.id);
-    } catch (e) {
-      console.error('Erro ao salvar draft:', e);
-    }
-
+    await saveDraft(updatedDraft);
     onSaveDraft(updatedDraft);
     onClose();
   };
@@ -152,7 +157,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   const handlePublish = async () => {
     const post: Post = {
       text: selectedText || 'Texto do versículo',
-      image: imagePreview, // String Base64 da imagem
+      image: imagePreview,
       book: selectedBook,
       chapter: selectedChapter,
       verse: selectedVerse,
@@ -160,20 +165,14 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
       createdAt: new Date(),
     };
 
-    try {
-      const docRef = await addDoc(collection(db, 'posts'), post);
-      console.log('Post salvo com ID:', docRef.id);
-    } catch (e) {
-      console.error('Erro ao salvar post:', e);
-    }
-
+    await publishPost(post);
     onPublish(post);
     onClose();
   };
 
   const resetForm = () => {
     setSelectedImage(null);
-    setImagePreview(defaultImage);
+    initializeDefaultImage();
     setSelectedText('');
     setSelectedBook('');
     setSelectedChapter(1);
@@ -253,16 +252,12 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                   </Box>
                 </Box>
               </Box>
-              <Box mt={2} mb={8} display="flex" alignItems="center">
+              <Box display="flex" alignItems="center">
                 <Button
                   as="label"
                   htmlFor="imageUpload"
                   variant="outline"
-                  width="auto"
-                  bg="white"
-                  size="sm"
-                  mr={4}
-                  color="black"
+                  colorScheme="teal"
                 >
                   Carregar Imagem
                   <Input
@@ -273,7 +268,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                     style={{ display: 'none' }}
                   />
                 </Button>
-                <Text>{selectedImage ? selectedImage.name : 'Nenhuma imagem selecionada'}</Text>
+                <Text ml={4}>{selectedImage ? selectedImage.name : 'Nenhuma imagem selecionada'}</Text>
                 {selectedImage && (
                   <Button
                     ml={4}
@@ -281,7 +276,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                     colorScheme="red"
                     onClick={() => {
                       setSelectedImage(null);
-                      setImagePreview(defaultImage);
+                      initializeDefaultImage();
                     }}
                   >
                     Remover Imagem
@@ -355,15 +350,15 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                   p={0}
                   textAlign="center"
                 >
-                  <Box display="flex" flexDirection="column" mr={28} mb={8}>
-                    <Text mb={0} fontSize={12} mr={20}>
+                  <Box display="flex" flexDirection="column" mb={8} mr={170}>
+                    <Text mb={0} fontSize={12}>
                       Versículo do dia
                     </Text>
-                    <Text fontSize="xl" fontWeight="bold" mb={0} mr={20}>
+                    <Text fontSize="xl" fontWeight="bold" mb={0}>
                       {getFormattedReference()}
                     </Text>
                   </Box>
-                  <Text fontSize="sm" noOfLines={3} mb={4} ml={1}>
+                  <Text fontSize="sm" noOfLines={3} mb={4}>
                     {selectedText || 'Texto do versículo'}
                   </Text>
                 </Box>
