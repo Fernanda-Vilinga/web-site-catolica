@@ -1,4 +1,4 @@
-
+/* 
 import { openDB, DBSchema } from 'idb';
 
 interface MyDB extends DBSchema {
@@ -58,3 +58,4 @@ export async function deleteDraft(id: number) {
   const db = await dbPromise;
   return db.delete('drafts', id);
 }
+ */

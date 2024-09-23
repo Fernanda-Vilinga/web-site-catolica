@@ -14,20 +14,21 @@ import {
 import {
   MdFavorite,
   MdMessage,
-  MdFavoriteBorder,
   MdEdit,
   MdDelete
 } from 'react-icons/md';
-import Header from './HearderUI';
+import Header from './HearderUI'; 
 import AdicionarVersiculo from './AdicionarVersiculoUI';
-import { 
-  fetchData, 
-  saveOrUpdateDraft, 
-  publishPost, 
-  deleteDraftById, 
-  deletePostById 
-} from '../repositorios/AppRepositorios';
-
+import {
+  getDrafts,
+  deleteDraft as deleteDraftById
+} from '../repositorios/DraftRepositorios';
+import {
+  fetchPosts,
+  deletePost as deletePostById,
+  publishPost,
+  addDraft
+} from '../repositorios/PostRepositorios';
 
 interface Post {
   id?: string;
@@ -61,21 +62,49 @@ const extractTextAfterReference = (text: string) => {
 const App: React.FC = () => {
   const [drafts, setDrafts] = useState<Post[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [firestoreStatus, setFirestoreStatus] = useState<string>('Desconectado');
   const [activeTab, setActiveTab] = useState<'drafts' | 'posts'>('posts');
-  const [firestoreStatus, setFirestoreStatus] = useState<string>('Verificando conexão...');
   const [editingDraft, setEditingDraft] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchData(setDrafts, setPosts, setFirestoreStatus);
+    const fetchInitialData = async () => {
+      try {
+        const draftsData = await getDrafts();
+        setDrafts(Array.isArray(draftsData) ? draftsData : []);
+      } catch (error) {
+        console.error('Erro ao buscar dados iniciais:', error);
+      }
+    };
+
+    fetchInitialData();
   }, []);
 
-  const handleSaveOrUpdate = (draft: Post) => {
-    saveOrUpdateDraft(draft, setDrafts, setActiveTab, setEditingDraft, setIsModalOpen);
+  useEffect(() => {
+    const unsubscribe = fetchPosts(setPosts, setFirestoreStatus);
+    return () => unsubscribe();
+  }, []);
+
+  const handleSaveOrUpdate = async (draft: Post) => {
+    try {
+      await addDraft(draft);
+      const draftsData = await getDrafts();
+      setDrafts(Array.isArray(draftsData) ? draftsData : []);
+      setEditingDraft(null);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar ou atualizar rascunho:', error);
+    }
   };
 
-  const handlePublish = (post: Post) => {
-    publishPost(post, setPosts, setActiveTab);
+  const handlePublish = async (draft: Post) => {
+    try {
+      await publishPost(draft);
+      await deleteDraftById(draft.id!);
+      setDrafts(drafts.filter(d => d.id !== draft.id));
+    } catch (error) {
+      console.error('Erro ao publicar post:', error);
+    }
   };
 
   const handleEditDraft = (draft: Post) => {
@@ -83,12 +112,22 @@ const App: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteDraft = (draftId: string) => {
-    deleteDraftById(draftId, setDrafts);
+  const handleDeleteDraft = async (draftId: string) => {
+    try {
+      await deleteDraftById(draftId);
+      setDrafts(drafts.filter(draft => draft.id !== draftId));
+    } catch (error) {
+      console.error('Erro ao excluir rascunho:', error);
+    }
   };
 
-  const handleDeletePost = (postId: string) => {
-    deletePostById(postId, setPosts);
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await deletePostById(postId);
+      setPosts(posts.filter(post => post.id !== postId));
+    } catch (error) {
+      console.error('Erro ao excluir post:', error);
+    }
   };
 
   const handleOpenAddVersiculo = () => {
@@ -101,9 +140,8 @@ const App: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
         if (editingDraft) {
-          setEditingDraft({ ...editingDraft, image: base64String });
+          setEditingDraft({ ...editingDraft, image: reader.result as string });
         }
       };
       reader.readAsDataURL(file);
@@ -124,16 +162,8 @@ const App: React.FC = () => {
         boxShadow="0 2px 4px rgba(0, 0, 0, 0.1)"
         position="relative"
       >
-        <Box
-          position="absolute"
-          top="4"
-          right="4"
-          zIndex="1"
-        >
-          <Button
-            colorScheme="blue"
-            onClick={handleOpenAddVersiculo}
-          >
+        <Box position="absolute" top="4" right="4" zIndex="1">
+          <Button colorScheme="blue" onClick={handleOpenAddVersiculo}>
             Adicionar versículo
           </Button>
           <AdicionarVersiculo
@@ -165,9 +195,9 @@ const App: React.FC = () => {
                     {drafts.length === 0 ? (
                       <Text>Nenhum rascunho ainda.</Text>
                     ) : (
-                      drafts.map(draft => (
+                      drafts.map((draft, index) => (
                         <Box
-                          key={draft.id}
+                          key={draft.id || `draft-${index}`} // Chave única
                           p={4}
                           borderBottom="1px solid #ddd"
                           borderRadius="md"
@@ -188,7 +218,7 @@ const App: React.FC = () => {
                             >
                               <img
                                 src={draft.image}
-                                alt={`Imagem do rascunho`}
+                                alt="Imagem do rascunho"
                                 style={{
                                   width: '100%',
                                   height: '100%',
@@ -210,32 +240,10 @@ const App: React.FC = () => {
                                 justifyContent="center"
                                 alignItems="center"
                                 textAlign="center"
-                                overflow="hidden"
-                                whiteSpace="pre-wrap"
-                                borderRadius="md"
                                 zIndex={1}
                               >
-                                <Box display="flex" flexDirection="column" marginRight={24}>
-                                  <Text mb={0} fontSize={12} mr={12}>
-                                    Versículo do dia
-                                  </Text>
-                                  <Text mb={2} fontWeight="bold" mr={8}>
-                                    {draft.passage}
-                                  </Text>
-                                </Box>
-                                <Text
-                                  mb={2}
-                                  style={{
-                                    overflow: 'hidden',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 3,
-                                    WebkitBoxOrient: 'vertical',
-                                    textOverflow: 'ellipsis',
-                                    wordBreak: 'break-word'
-                                  }}
-                                >
-                                  {extractTextAfterReference(draft.text)}
-                                </Text>
+                                <Text mb={2} fontWeight="bold">{draft.passage}</Text>
+                                <Text mb={2}>{extractTextAfterReference(draft.text)}</Text>
                                 {draft.createdAt && (
                                   <Text fontSize="xs" mt={2}>
                                     Criado em: {formatDate(draft.createdAt)}
@@ -251,13 +259,12 @@ const App: React.FC = () => {
                                   alignItems="center"
                                   gap={2}
                                 >
-                                  <IconButton
-                                    icon={<MdEdit />}
-                                    aria-label="Editar"
-                                    variant="ghost"
-                                    color="white"
-                                    onClick={() => handleEditDraft(draft)}
-                                  />
+                                  <Button
+                                    colorScheme="green"
+                                    onClick={() => handlePublish(draft)}
+                                  >
+                                    Publicar
+                                  </Button>
                                   <IconButton
                                     icon={<MdDelete />}
                                     aria-label="Excluir"
@@ -265,41 +272,6 @@ const App: React.FC = () => {
                                     color="white"
                                     onClick={() => handleDeleteDraft(draft.id!)}
                                   />
-                                </Box>
-                                <Box
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="100%"
-                                  p={2}
-                                  display="flex"
-                                  justifyContent="space-between"
-                                  alignItems="center"
-                                  zIndex={2}
-                                  bg="rgba(0, 0, 0, 0.3)"
-                                >
-                                  <Box textAlign="center" color="white">
-                                    <IconButton
-                                      color="white"
-                                      icon={<MdFavoriteBorder />}
-                                      aria-label="Curtir"
-                                      variant="ghost"
-                                      _hover={{ bg: 'transparent' }}
-                                      _active={{ bg: 'transparent' }}
-                                    />
-                                    <Text fontSize="sm" mt={1}>10</Text>
-                                  </Box>
-                                  <Box textAlign="center" color="white">
-                                    <IconButton
-                                      color="white"
-                                      icon={<MdMessage />}
-                                      aria-label="Comentário"
-                                      variant="ghost"
-                                      _hover={{ bg: 'transparent' }}
-                                      _active={{ bg: 'transparent' }}
-                                    />
-                                    <Text fontSize="sm" mt={1}>5</Text>
-                                  </Box>
                                 </Box>
                               </Box>
                             </Box>
@@ -314,9 +286,9 @@ const App: React.FC = () => {
                     {posts.length === 0 ? (
                       <Text>Nenhuma publicação ainda.</Text>
                     ) : (
-                      posts.map(post => (
+                      posts.map((post, index) => (
                         <Box
-                          key={post.id}
+                          key={post.id || `post-${index}`} // Chave única
                           p={4}
                           borderBottom="1px solid #ddd"
                           borderRadius="md"
@@ -337,7 +309,7 @@ const App: React.FC = () => {
                             >
                               <img
                                 src={post.image}
-                                alt={`Imagem da publicação`}
+                                alt="Imagem da publicação"
                                 style={{
                                   width: '100%',
                                   height: '100%',
@@ -359,32 +331,10 @@ const App: React.FC = () => {
                                 justifyContent="center"
                                 alignItems="center"
                                 textAlign="center"
-                                overflow="hidden"
-                                whiteSpace="pre-wrap"
-                                borderRadius="md"
                                 zIndex={1}
                               >
-                                <Box display="flex" flexDirection="column" marginRight={24}>
-                                  <Text mb={0} fontWeight="bold">
-                                    Versículo do dia
-                                  </Text>
-                                  <Text mb={2} fontWeight="bold">
-                                    {post.passage}
-                                  </Text>
-                                </Box>
-                                <Text
-                                  mb={2}
-                                  style={{
-                                    overflow: 'hidden',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 3,
-                                    WebkitBoxOrient: 'vertical',
-                                    textOverflow: 'ellipsis',
-                                    wordBreak: 'break-word'
-                                  }}
-                                >
-                                  {extractTextAfterReference(post.text)}
-                                </Text>
+                                <Text mb={2} fontWeight="bold">{post.passage}</Text>
+                                <Text mb={2}>{extractTextAfterReference(post.text)}</Text>
                                 {post.createdAt && (
                                   <Text fontSize="xs" mt={2}>
                                     Criado em: {formatDate(post.createdAt)}
@@ -433,8 +383,6 @@ const App: React.FC = () => {
                                       icon={<MdFavorite />}
                                       aria-label="Curtir"
                                       variant="ghost"
-                                      _hover={{ bg: 'transparent' }}
-                                      _active={{ bg: 'transparent' }}
                                     />
                                     <Text fontSize="sm" mt={1}>{post.likes || 0}</Text>
                                   </Box>
@@ -444,8 +392,6 @@ const App: React.FC = () => {
                                       icon={<MdMessage />}
                                       aria-label="Comentário"
                                       variant="ghost"
-                                      _hover={{ bg: 'transparent' }}
-                                      _active={{ bg: 'transparent' }}
                                     />
                                     <Text fontSize="sm" mt={1}>{post.comments || 0}</Text>
                                   </Box>
