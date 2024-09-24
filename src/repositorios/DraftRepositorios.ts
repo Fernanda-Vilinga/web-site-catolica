@@ -9,7 +9,8 @@ import { Post } from '../dao/PostDAO';
 // Obter todos os rascunhos
 export const getDrafts = async (): Promise<Post[]> => {
   try {
-    return await getDraftsFromDAO();
+    return []
+   // return await getDraftsFromDAO();
   } catch (error) {
     console.error('Erro ao obter drafts:', error);
     return [];
@@ -19,7 +20,7 @@ export const getDrafts = async (): Promise<Post[]> => {
 // Adicionar um novo rascunho
 export const addDraft = async (draft: Post): Promise<number | void> => {
   try {
-    return await addDraftToDAO(draft);
+    ///return await addDraftToDAO(draft);
   } catch (error) {
     console.error('Erro ao adicionar draft:', error);
   }

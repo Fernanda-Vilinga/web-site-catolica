@@ -18,17 +18,18 @@ import {
   MdDelete
 } from 'react-icons/md';
 import Header from './HearderUI'; 
-import AdicionarVersiculo from './AdicionarVersiculoUI';
+//import AdicionarVersiculo from './AdicionarVersiculoUI';
 import {
-  getDrafts,
-  deleteDraft as deleteDraftById
+  getDrafts
 } from '../repositorios/DraftRepositorios';
-import {
-  fetchPosts,
-  deletePost as deletePostById,
-  publishPost,
-  addDraft
-} from '../repositorios/PostRepositorios';
+// import {
+//   fetchPosts,
+//   deletePost as deletePostById,
+//   publishPost,
+//   addDraft
+// } from '../repositorios/PostRepositorios';
+import { usePostState } from '../repositorios/usePostState';
+import { useDraftState } from '../repositorios/useDraftState';
 
 interface Post {
   id?: string;
@@ -59,19 +60,28 @@ const extractTextAfterReference = (text: string) => {
   return splitText.length > 1 ? splitText[1] : cleanedText;
 };
 
-const App: React.FC = () => {
-  const [drafts, setDrafts] = useState<Post[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
+export default  function AppPage(): JSX.Element {
+  //const [drafts, setDrafts] = useState<Post[]>([]);
+  // const [posts, setPosts] = useState<Post[]>([]);
   const [firestoreStatus, setFirestoreStatus] = useState<string>('Desconectado');
   const [activeTab, setActiveTab] = useState<'drafts' | 'posts'>('posts');
   const [editingDraft, setEditingDraft] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const posts = usePostState((state) => state.posts);
+  const drafts = useDraftState((state) => state.drafts);
+  const getAllWithoutPosts = usePostState((state) => state.getAllWithoutPosts);
+  const getAllWithoutDrafts = useDraftState((state) => state.getAllWithoutDrafts);
+
+  useEffect(() => {
+     getAllWithoutPosts()
+     getAllWithoutDrafts()
+  }, [])
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const draftsData = await getDrafts();
-        setDrafts(Array.isArray(draftsData) ? draftsData : []);
+        //setDrafts(Array.isArray(draftsData) ? draftsData : []);
       } catch (error) {
         console.error('Erro ao buscar dados iniciais:', error);
       }
@@ -80,73 +90,73 @@ const App: React.FC = () => {
     fetchInitialData();
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = fetchPosts(setPosts, setFirestoreStatus);
-    return () => unsubscribe();
-  }, []);
+  // useEffect(() => {
+  //   const unsubscribe = fetchPosts(setPosts, setFirestoreStatus);
+  //   return () => unsubscribe();
+  // }, []);
 
-  const handleSaveOrUpdate = async (draft: Post) => {
-    try {
-      await addDraft(draft);
-      const draftsData = await getDrafts();
-      setDrafts(Array.isArray(draftsData) ? draftsData : []);
-      setEditingDraft(null);
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Erro ao salvar ou atualizar rascunho:', error);
-    }
-  };
+  // const handleSaveOrUpdate = async (draft: Post) => {
+  //   try {
+  //     await addDraft(draft);
+  //     const draftsData = await getDrafts();
+  //     setDrafts(Array.isArray(draftsData) ? draftsData : []);
+  //     setEditingDraft(null);
+  //     setIsModalOpen(false);
+  //   } catch (error) {
+  //     console.error('Erro ao salvar ou atualizar rascunho:', error);
+  //   }
+  // };
 
-  const handlePublish = async (draft: Post) => {
-    try {
-      await publishPost(draft);
-      await deleteDraftById(draft.id!);
-      setDrafts(drafts.filter(d => d.id !== draft.id));
-    } catch (error) {
-      console.error('Erro ao publicar post:', error);
-    }
-  };
+  // const handlePublish = async (draft: Post) => {
+  //   try {
+  //     await publishPost(draft);
+  //     await deleteDraftById(draft.id!);
+  //     setDrafts(drafts.filter(d => d.id !== draft.id));
+  //   } catch (error) {
+  //     console.error('Erro ao publicar post:', error);
+  //   }
+  // };
 
-  const handleEditDraft = (draft: Post) => {
-    setEditingDraft(draft);
-    setIsModalOpen(true);
-  };
+  // const handleEditDraft = (draft: Post) => {
+  //   setEditingDraft(draft);
+  //   setIsModalOpen(true);
+  // };
 
-  const handleDeleteDraft = async (draftId: string) => {
-    try {
-      await deleteDraftById(draftId);
-      setDrafts(drafts.filter(draft => draft.id !== draftId));
-    } catch (error) {
-      console.error('Erro ao excluir rascunho:', error);
-    }
-  };
+  // const handleDeleteDraft = async (draftId: string) => {
+  //   try {
+  //     await deleteDraftById(draftId);
+  //     setDrafts(drafts.filter(draft => draft.id !== draftId));
+  //   } catch (error) {
+  //     console.error('Erro ao excluir rascunho:', error);
+  //   }
+  // };
 
-  const handleDeletePost = async (postId: string) => {
-    try {
-      await deletePostById(postId);
-      setPosts(posts.filter(post => post.id !== postId));
-    } catch (error) {
-      console.error('Erro ao excluir post:', error);
-    }
-  };
+  // const handleDeletePost = async (postId: string) => {
+  //   try {
+  //     await deletePostById(postId);
+  //     setPosts(posts.filter(post => post.id !== postId));
+  //   } catch (error) {
+  //     console.error('Erro ao excluir post:', error);
+  //   }
+  // };
 
   const handleOpenAddVersiculo = () => {
     setEditingDraft(null);
     setIsModalOpen(true);
   };
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (editingDraft) {
-          setEditingDraft({ ...editingDraft, image: reader.result as string });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       if (editingDraft) {
+  //         setEditingDraft({ ...editingDraft, image: reader.result as string });
+  //       }
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
   return (
     <Box>
@@ -166,14 +176,14 @@ const App: React.FC = () => {
           <Button colorScheme="blue" onClick={handleOpenAddVersiculo}>
             Adicionar versículo
           </Button>
-          <AdicionarVersiculo
+          {/* <AdicionarVersiculo
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             draft={editingDraft}
             onSaveDraft={handleSaveOrUpdate}
             onPublish={handlePublish}
             onImageChange={handleImageChange}
-          />
+          /> */}
         </Box>
 
         <Box display="flex" flexDirection="column" alignItems="center" mb={4} gap={4}>
@@ -243,7 +253,6 @@ const App: React.FC = () => {
                                 zIndex={1}
                               >
                                 <Text mb={2} fontWeight="bold">{draft.passage}</Text>
-                                <Text mb={2}>{extractTextAfterReference(draft.text)}</Text>
                                 {draft.createdAt && (
                                   <Text fontSize="xs" mt={2}>
                                     Criado em: {formatDate(draft.createdAt)}
@@ -261,7 +270,8 @@ const App: React.FC = () => {
                                 >
                                   <Button
                                     colorScheme="green"
-                                    onClick={() => handlePublish(draft)}
+                                   // onClick={() => handlePublish(draft)}
+                                   onClick={() => console.log("Aqui")}
                                   >
                                     Publicar
                                   </Button>
@@ -270,7 +280,8 @@ const App: React.FC = () => {
                                     aria-label="Excluir"
                                     variant="ghost"
                                     color="white"
-                                    onClick={() => handleDeleteDraft(draft.id!)}
+                                    // onClick={() => handleDeleteDraft(draft.id!)}
+                                    onClick={() => console.log("Aququq")}
                                   />
                                 </Box>
                               </Box>
@@ -355,14 +366,16 @@ const App: React.FC = () => {
                                     aria-label="Editar"
                                     variant="ghost"
                                     color="white"
-                                    onClick={() => handleEditDraft(post)}
+                                    //onClick={() => handleEditDraft(post)}
+                                    onClick={() => console.log("hs")}
                                   />
                                   <IconButton
                                     icon={<MdDelete />}
                                     aria-label="Excluir"
                                     variant="ghost"
                                     color="white"
-                                    onClick={() => handleDeletePost(post.id!)}
+                                    onClick={() => console.log("hs")}
+                                   // onClick={() => handleDeletePost(post.id!)}
                                   />
                                 </Box>
                                 <Box
@@ -384,7 +397,8 @@ const App: React.FC = () => {
                                       aria-label="Curtir"
                                       variant="ghost"
                                     />
-                                    <Text fontSize="sm" mt={1}>{post.likes || 0}</Text>
+                                    {/* <Text fontSize="sm" mt={1}>{post.likes || 0}</Text> */}
+                                    <Text fontSize="sm" mt={1}>{post.text}</Text>
                                   </Box>
                                   <Box textAlign="center" color="white">
                                     <IconButton
@@ -393,7 +407,8 @@ const App: React.FC = () => {
                                       aria-label="Comentário"
                                       variant="ghost"
                                     />
-                                    <Text fontSize="sm" mt={1}>{post.comments || 0}</Text>
+                                    {/* <Text fontSize="sm" mt={1}>{post.comments || 0}</Text> */}
+                                    <Text fontSize="sm" mt={1}>{post.id}</Text>
                                   </Box>
                                 </Box>
                               </Box>
@@ -412,5 +427,3 @@ const App: React.FC = () => {
     </Box>
   );
 };
-
-export default App;

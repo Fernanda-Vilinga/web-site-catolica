@@ -1,7 +1,7 @@
 import {
   fetchFirestorePosts as fetchPostsFromFirestore,
  
-  updateFirestorePost,
+  //updateFirestorePost,
   deleteFirestorePostById,
   addFirestoreDraft,
   createAndAddPost, // Importando a nova função
@@ -9,6 +9,13 @@ import {
 import { Post } from '../dao/PostDAO';
 
 // Função para buscar posts
+// export const fetchPosts = (
+//   setPosts: React.Dispatch<React.SetStateAction<Post[]>>,
+//   setFirestoreStatus: React.Dispatch<React.SetStateAction<string>>
+// ) => {
+//   return fetchPostsFromFirestore(setPosts, setFirestoreStatus);
+// };
+
 export const fetchPosts = (
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>,
   setFirestoreStatus: React.Dispatch<React.SetStateAction<string>>
@@ -36,13 +43,13 @@ export const addDraft = async (draft: Post) => {
 };
 
 // Função para atualizar um post existente
-export const updatePost = async (postId: string, updatedPost: Partial<Post>) => {
-  try {
-    await updateFirestorePost(postId, updatedPost);
-  } catch (error) {
-    console.error('Erro ao atualizar post:', error);
-  }
-};
+// export const updatePost = async (postId: string, updatedPost?: Partial<Post>) => {
+//   try {
+//     await updateFirestorePost(postId, updatedPost);
+//   } catch (error) {
+//     console.error('Erro ao atualizar post:', error);
+//   }
+// };
 
 // Função para deletar um post
 export const deletePost = async (postId: string) => {

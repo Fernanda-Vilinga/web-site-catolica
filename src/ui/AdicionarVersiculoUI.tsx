@@ -21,7 +21,8 @@ import { getBibleData, BibleBook } from '../data/bibleData';
 import defaultImage from '../assets/paisagem.jpeg';
 import { Post } from '../dao/PostDAO';
 import { addDraft as addDraftRepo } from '../repositorios/DraftRepositorios';
-import { addPost as addPostRepo, updatePost as updatePostRepo } from '../repositorios/PostRepositorios';
+import { addPost as addPostRepo } from '../repositorios/PostRepositorios';
+// import { addPost as addPostRepo, updatePost as updatePostRepo } from '../repositorios/PostRepositorios';
 
 interface AdicionarVersiculoProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ interface AdicionarVersiculoProps {
   onPublish: (post: Post) => void;
 }
 
-const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
+export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   isOpen,
   onClose,
   draft,
@@ -201,7 +202,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   
     try {
       const post: Post = {
-        id: draft?.id,
+    //    id: draft?.id,
         text: selectedText || 'Texto do versículo',
         image: imagePreview || '',
         book: selectedBook,
@@ -212,7 +213,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
       };
   
       if (draft) {
-        await updatePostRepo(post);
+       // await updatePostRepo(post);
         onPublish(post);
         toast({
           title: 'Post atualizado.',
