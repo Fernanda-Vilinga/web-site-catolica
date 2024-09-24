@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -20,7 +21,8 @@ import {
 import Header from './HearderUI'; 
 //import AdicionarVersiculo from './AdicionarVersiculoUI';
 import {
-  getDrafts
+  addDraft,
+ // getDrafts
 } from '../repositorios/DraftRepositorios';
 // import {
 //   fetchPosts,
@@ -30,16 +32,20 @@ import {
 // } from '../repositorios/PostRepositorios';
 import { usePostState } from '../repositorios/usePostState';
 import { useDraftState } from '../repositorios/useDraftState';
+import AdicionarVersiculo from './AdicionarVersiculoUI';
+import { publishPost, deletePost } from '../repositorios/PostRepositorios';
+import { Draft, Post } from '../types/types';
+import { deleteDraft } from '../repositorios/DraftRepositorios';
 
-interface Post {
-  id?: string;
-  passage: string;
-  text: string;
-  image?: string;
-  createdAt?: Date;
-  likes?: number;
-  comments?: number;
-}
+// interface Post {
+//   id?: string;
+//   passage: string;
+//   text: string;
+//   image?: string;
+//   createdAt?: Date;
+//   likes?: number;
+//   comments?: number;
+// }
 
 const headerBgColor = '#F5F5F5';
 
@@ -61,7 +67,7 @@ const extractTextAfterReference = (text: string) => {
 };
 
 export default  function AppPage(): JSX.Element {
-  //const [drafts, setDrafts] = useState<Post[]>([]);
+  // const [drafts, setDrafts] = useState<Post[]>([]);
   // const [posts, setPosts] = useState<Post[]>([]);
   const [firestoreStatus, setFirestoreStatus] = useState<string>('Desconectado');
   const [activeTab, setActiveTab] = useState<'drafts' | 'posts'>('posts');
@@ -71,92 +77,95 @@ export default  function AppPage(): JSX.Element {
   const drafts = useDraftState((state) => state.drafts);
   const getAllWithoutPosts = usePostState((state) => state.getAllWithoutPosts);
   const getAllWithoutDrafts = useDraftState((state) => state.getAllWithoutDrafts);
+  const deleteGraftById = useDraftState((state) => state.deleteGraftById);
+  const deletePostById = usePostState((state) => state.deletePostById);
 
   useEffect(() => {
      getAllWithoutPosts()
      getAllWithoutDrafts()
   }, [])
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const draftsData = await getDrafts();
-        //setDrafts(Array.isArray(draftsData) ? draftsData : []);
-      } catch (error) {
-        console.error('Erro ao buscar dados iniciais:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchInitialData = async () => {
+  //     try {
+  //       const draftsData = await getDrafts();
+  //       //setDrafts(Array.isArray(draftsData) ? draftsData : []);
+  //     } catch (error) {
+  //       console.error('Erro ao buscar dados iniciais:', error);
+  //     }
+  //   };
 
-    fetchInitialData();
-  }, []);
+  //   fetchInitialData();
+  // }, []);
 
   // useEffect(() => {
   //   const unsubscribe = fetchPosts(setPosts, setFirestoreStatus);
   //   return () => unsubscribe();
   // }, []);
 
-  // const handleSaveOrUpdate = async (draft: Post) => {
-  //   try {
-  //     await addDraft(draft);
-  //     const draftsData = await getDrafts();
-  //     setDrafts(Array.isArray(draftsData) ? draftsData : []);
-  //     setEditingDraft(null);
-  //     setIsModalOpen(false);
-  //   } catch (error) {
-  //     console.error('Erro ao salvar ou atualizar rascunho:', error);
-  //   }
-  // };
+  const handleSaveOrUpdate = async (draft: Draft) => {
+    try {
+     await addDraft(draft);
+     // const draftsData = await getDrafts();
+    //  const draftsData = drafts
+    //  setDrafts(Array.isArray(draftsData) ? draftsData : []);
+      setEditingDraft(null);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar ou atualizar rascunho:', error);
+    }
+  };
 
-  // const handlePublish = async (draft: Post) => {
-  //   try {
-  //     await publishPost(draft);
-  //     await deleteDraftById(draft.id!);
-  //     setDrafts(drafts.filter(d => d.id !== draft.id));
-  //   } catch (error) {
-  //     console.error('Erro ao publicar post:', error);
-  //   }
-  // };
+  const handlePublish = async (draft: Post) => {
+    try {
+      // await publishPost(draft);
+      // await deleteDraftById(draft.id!);
+      // setDrafts(drafts.filter(d => d.id !== draft.id));
+    } catch (error) {
+      console.error('Erro ao publicar post:', error);
+    }
+  };
 
-  // const handleEditDraft = (draft: Post) => {
-  //   setEditingDraft(draft);
-  //   setIsModalOpen(true);
-  // };
+  const handleEditDraft = (post: Post) => {
+    setEditingDraft(post);
+    setIsModalOpen(true);
+  };
 
-  // const handleDeleteDraft = async (draftId: string) => {
-  //   try {
-  //     await deleteDraftById(draftId);
-  //     setDrafts(drafts.filter(draft => draft.id !== draftId));
-  //   } catch (error) {
-  //     console.error('Erro ao excluir rascunho:', error);
-  //   }
-  // };
+  const handleDeleteDraftById = async (draft: Draft) => {
+    try {
+      deleteGraftById(draft.id ?? "");
+    } catch (error) {
+      console.error('Erro ao excluir rascunho:', error);
+    }
+  };
 
-  // const handleDeletePost = async (postId: string) => {
-  //   try {
-  //     await deletePostById(postId);
-  //     setPosts(posts.filter(post => post.id !== postId));
-  //   } catch (error) {
-  //     console.error('Erro ao excluir post:', error);
-  //   }
-  // };
+  const handleDeletePostById = async (post: Post) => {
+    try {
+      deletePostById(post.id);
+    } catch (error) {
+      console.error('Erro ao excluir post:', error);
+    }
+  };
+
+
 
   const handleOpenAddVersiculo = () => {
     setEditingDraft(null);
     setIsModalOpen(true);
   };
 
-  // const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (file) {
-  //     const reader = new FileReader();
-  //     reader.onloadend = () => {
-  //       if (editingDraft) {
-  //         setEditingDraft({ ...editingDraft, image: reader.result as string });
-  //       }
-  //     };
-  //     reader.readAsDataURL(file);
-  //   }
-  // };
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (editingDraft) {
+          setEditingDraft({ ...editingDraft, image: reader.result as string });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <Box>
@@ -176,14 +185,14 @@ export default  function AppPage(): JSX.Element {
           <Button colorScheme="blue" onClick={handleOpenAddVersiculo}>
             Adicionar versículo
           </Button>
-          {/* <AdicionarVersiculo
+          <AdicionarVersiculo
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             draft={editingDraft}
             onSaveDraft={handleSaveOrUpdate}
             onPublish={handlePublish}
-            onImageChange={handleImageChange}
-          /> */}
+           // onImageChange={handleImageChange}
+          />
         </Box>
 
         <Box display="flex" flexDirection="column" alignItems="center" mb={4} gap={4}>
@@ -271,7 +280,7 @@ export default  function AppPage(): JSX.Element {
                                   <Button
                                     colorScheme="green"
                                    // onClick={() => handlePublish(draft)}
-                                   onClick={() => console.log("Aqui")}
+                                    onClick={() => console.log("Test")}
                                   >
                                     Publicar
                                   </Button>
@@ -280,8 +289,7 @@ export default  function AppPage(): JSX.Element {
                                     aria-label="Excluir"
                                     variant="ghost"
                                     color="white"
-                                    // onClick={() => handleDeleteDraft(draft.id!)}
-                                    onClick={() => console.log("Aququq")}
+                                    onClick={() => handleDeleteDraftById(draft)}
                                   />
                                 </Box>
                               </Box>
@@ -366,16 +374,14 @@ export default  function AppPage(): JSX.Element {
                                     aria-label="Editar"
                                     variant="ghost"
                                     color="white"
-                                    //onClick={() => handleEditDraft(post)}
-                                    onClick={() => console.log("hs")}
+                                    onClick={() => handleEditDraft(post)}
                                   />
                                   <IconButton
                                     icon={<MdDelete />}
                                     aria-label="Excluir"
                                     variant="ghost"
                                     color="white"
-                                    onClick={() => console.log("hs")}
-                                   // onClick={() => handleDeletePost(post.id!)}
+                                    onClick={() => handleDeletePostById(post)}
                                   />
                                 </Box>
                                 <Box
@@ -398,7 +404,7 @@ export default  function AppPage(): JSX.Element {
                                       variant="ghost"
                                     />
                                     {/* <Text fontSize="sm" mt={1}>{post.likes || 0}</Text> */}
-                                    <Text fontSize="sm" mt={1}>{post.text}</Text>
+                                    {/* <Text fontSize="sm" mt={1}>{post.text}</Text> */}
                                   </Box>
                                   <Box textAlign="center" color="white">
                                     <IconButton
@@ -408,7 +414,7 @@ export default  function AppPage(): JSX.Element {
                                       variant="ghost"
                                     />
                                     {/* <Text fontSize="sm" mt={1}>{post.comments || 0}</Text> */}
-                                    <Text fontSize="sm" mt={1}>{post.id}</Text>
+                                    {/* <Text fontSize="sm" mt={1}>{post.text}</Text> */}
                                   </Box>
                                 </Box>
                               </Box>
@@ -427,3 +433,4 @@ export default  function AppPage(): JSX.Element {
     </Box>
   );
 };
+

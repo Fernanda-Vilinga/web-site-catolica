@@ -5,22 +5,25 @@ import {
   publishDraft as publishDraftFromDAO
 } from '../dao/DraftDAO';
 import { Post } from '../dao/PostDAO';
+import DraftDao from '../database/DraftDao';
+import { Draft } from '../types/types';
 
 // Obter todos os rascunhos
-export const getDrafts = async (): Promise<Post[]> => {
-  try {
-    return []
-   // return await getDraftsFromDAO();
-  } catch (error) {
-    console.error('Erro ao obter drafts:', error);
-    return [];
-  }
-};
+// export const getDrafts = async (): Promise<Post[]> => {
+//   try {
+//     return await getDraftsFromDAO();
+//   } catch (error) {
+//     console.error('Erro ao obter drafts:', error);
+//     return [];
+//   }
+// };
 
 // Adicionar um novo rascunho
-export const addDraft = async (draft: Post): Promise<number | void> => {
+export const addDraft = async (draft: Draft): Promise<Draft | void> => {
   try {
-    ///return await addDraftToDAO(draft);
+    let res = await DraftDao.shared.addDraft(draft)
+    console.log("Resposta", res)
+    return res
   } catch (error) {
     console.error('Erro ao adicionar draft:', error);
   }

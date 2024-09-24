@@ -11,6 +11,7 @@ interface State {
 
 interface Actions {
      getAllWithoutPosts: () => void
+     deletePostById: (postId: string) => void
 }
 
 const initialState: State = {
@@ -37,5 +38,17 @@ export const usePostState = create<Actions & State>()((set) => ({
         } finally {
             set(() => ({ isLoading: false }));
         }
-    }
+    },
+
+    async deletePostById(postId: string) {
+        try {
+            await PostDao.shared.deletePost(postId)
+
+            set((state) => ({
+                posts: state.posts.filter( post => post.id !== postId)
+            }))
+        } catch (error) {
+            throw error
+        }
+  }
 }))

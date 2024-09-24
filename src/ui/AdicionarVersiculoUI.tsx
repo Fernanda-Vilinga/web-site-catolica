@@ -19,15 +19,15 @@ import {
 import { MdFavoriteBorder, MdMessage } from 'react-icons/md';
 import { getBibleData, BibleBook } from '../data/bibleData';
 import defaultImage from '../assets/paisagem.jpeg';
-import { Post } from '../dao/PostDAO';
 import { addDraft as addDraftRepo } from '../repositorios/DraftRepositorios';
-import { addPost as addPostRepo } from '../repositorios/PostRepositorios';
-// import { addPost as addPostRepo, updatePost as updatePostRepo } from '../repositorios/PostRepositorios';
+import { Post } from '../types/types';
+//import { addPost as addPostRepo, updatePost as updatePostRepo } from '../repositorios/PostRepositorios';
 
 interface AdicionarVersiculoProps {
   isOpen: boolean;
   onClose: () => void;
-  draft?: Post & { id?: string };
+  draft: Post | null;
+  //draft?: Post & { id?: string };
   onSaveDraft: (draft: Post) => void;
   onPublish: (post: Post) => void;
 }
@@ -157,6 +157,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
 
     try {
       const newDraft: Post = {
+        id: draft?.id ?? "",
         text: selectedText || 'Texto do versículo',
         image: imagePreview,
         book: selectedBook,
@@ -167,6 +168,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
       };
 
       await addDraftRepo(newDraft);
+      
       onSaveDraft(newDraft);
       toast({
         title: 'Rascunho salvo.',
@@ -202,7 +204,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   
     try {
       const post: Post = {
-    //    id: draft?.id,
+        id: draft?.id ?? "",
         text: selectedText || 'Texto do versículo',
         image: imagePreview || '',
         book: selectedBook,
@@ -213,6 +215,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
       };
   
       if (draft) {
+        //TODO: Adicionar Post
        // await updatePostRepo(post);
         onPublish(post);
         toast({
@@ -223,7 +226,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
           isClosable: true,
         });
       } else {
-        await addPostRepo(post);
+       // await addPostRepo(post);
         onPublish(post);
         toast({
           title: 'Post salvo.',

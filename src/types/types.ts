@@ -1,6 +1,6 @@
 // types.ts
 
-export type Post = {
+export interface Post  {
     id: string;
     book: string;
     text: string;
@@ -19,7 +19,7 @@ export type Post = {
   //   image?: string;
   //   passage: string // Adiciona um campo opcional para imagens
   // }
-  export type Draft = {
+  export interface Draft {
     id?: string;
     book: string;
     text: string;

@@ -1,5 +1,5 @@
-import { collection, getDocs, Timestamp } from "firebase/firestore";
-import { Draft } from "../types/types";
+import { addDoc, collection, deleteDoc, doc, getDocs, Timestamp } from "firebase/firestore";
+import { Draft, Post } from "../types/types";
 import { dbFirestore } from "../config/firebaseConfig";
 import { COLLECTIONS } from "../utils/constants";
 
@@ -7,6 +7,19 @@ import { COLLECTIONS } from "../utils/constants";
 export default class DraftDao {
 
     static shared = new DraftDao()
+
+    addDraft(draft: Draft): Promise<Draft> {
+        return new Promise( async (resolve, reject) => {
+          try {
+            const collectionRef = collection(dbFirestore, COLLECTIONS.COLLECTION_DRAFTS)
+            await addDoc(collectionRef, draft)
+      
+            resolve(draft)
+          } catch (error) {
+            reject(new Error(`Erro ao adicionar o draft: ${error}`));
+          }
+        })
+      }
 
     getAllWithDrafts(): Promise<Draft[]> {
         return new Promise((resolve, reject) => {
@@ -34,5 +47,15 @@ export default class DraftDao {
             })
             .catch(reject)
         })
+    }
+
+    async  deleteDraft(draftId: string) {
+        try {
+            const draftDocRef = doc(dbFirestore, COLLECTIONS.COLLECTION_DRAFTS, draftId)
+            await deleteDoc(draftDocRef)
+        } catch (error) {
+            console.error(new Error(`Erro ao deletar o courier: ${error}`))
+            throw error
+        }
     }
 }
