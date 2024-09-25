@@ -1,10 +1,8 @@
 import {
   getDrafts as getDraftsFromDAO,
-  addDraft as addDraftToDAO,
   deleteDraft as deleteDraftFromDAO,
   publishDraft as publishDraftFromDAO
 } from '../dao/DraftDAO';
-import { Post } from '../dao/PostDAO';
 import DraftDao from '../database/DraftDao';
 import { Draft } from '../types/types';
 
@@ -19,15 +17,15 @@ import { Draft } from '../types/types';
 // };
 
 // Adicionar um novo rascunho
-export const addDraft = async (draft: Draft): Promise<Draft | void> => {
-  try {
-    let res = await DraftDao.shared.addDraft(draft)
-    console.log("Resposta", res)
-    return res
-  } catch (error) {
-    console.error('Erro ao adicionar draft:', error);
-  }
-};
+// export const addDraft = async (draft: Draft): Promise<Draft | void> => {
+//   try {
+//     let res = await DraftDao.shared.addDraft(draft)
+//     console.log("Resposta", res)
+//     return res
+//   } catch (error) {
+//     console.error('Erro ao adicionar draft:', error);
+//   }
+// };
 
 // Deletar um rascunho pelo ID
 export const deleteDraft = async (id: number): Promise<void> => {

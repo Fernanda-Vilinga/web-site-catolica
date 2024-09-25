@@ -1,20 +1,23 @@
 import {
-  fetchFirestorePosts as fetchPostsFromFirestore,
- 
+
   //updateFirestorePost,
   deleteFirestorePostById,
   addFirestoreDraft,
-  createAndAddPost, // Importando a nova função
+  createAndAddPost,
+  addFirestorePost, // Importando a nova função
 } from '../dao/PostDAO';
-import { Post } from '../dao/PostDAO';
+
+import { Draft, Post } from '../types/types';
 
 // Função para buscar posts
-// export const fetchPosts = (
-//   setPosts: React.Dispatch<React.SetStateAction<Post[]>>,
-//   setFirestoreStatus: React.Dispatch<React.SetStateAction<string>>
-// ) => {
-//   return fetchPostsFromFirestore(setPosts, setFirestoreStatus);
-// };
+/*
+export const fetchPosts = (
+  setPosts: React.Dispatch<React.SetStateAction<Post[]>>,
+  setFirestoreStatus: React.Dispatch<React.SetStateAction<string>>
+) => {
+  return fetchPostsFromFirestore(setPosts, setFirestoreStatus);
+};
+
 
 export const fetchPosts = (
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>,
@@ -23,7 +26,7 @@ export const fetchPosts = (
   return fetchPostsFromFirestore(setPosts, setFirestoreStatus);
 };
 
-// Função para adicionar um novo post
+Função para adicionar um novo post
 export const addPost = async (post: Post & { id?: string }) => {
   try {
     console.log('Adicionando post:', post);
@@ -32,9 +35,19 @@ export const addPost = async (post: Post & { id?: string }) => {
     console.error('Erro ao adicionar post:', error);
   }
 };
+*/
+
+export const addPost = async (post: Post) => {
+  try {
+    console.log('Adicionando post:', post);
+    await addFirestorePost(post); // Usando a nova função
+  } catch (error) {
+    console.error('Erro ao adicionar post:', error);
+  }
+};
 
 // Função para adicionar um rascunho
-export const addDraft = async (draft: Post) => {
+export const addDraft = async (draft: Draft) => {
   try {
     await addFirestoreDraft(draft);
   } catch (error) {
@@ -61,7 +74,7 @@ export const deletePost = async (postId: string) => {
 };
 
 // Função para publicar um post
-export const publishPost = async (post: Post & { id?: string }) => {
+export const puublishPost = async (post: Post & { id?: string }) => {
   try {
     console.log('Adicionando post:', post);
     await createAndAddPost(post); // Usando a nova função

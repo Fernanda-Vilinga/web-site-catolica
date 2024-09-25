@@ -1,12 +1,13 @@
-import { Timestamp, collection, onSnapshot, addDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { Timestamp, collection, addDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
-import { convertDateFirestore } from '../utils/helpers';
+
 import { dbFirestore } from '../config/firebaseConfig';
 import { COLLECTIONS } from '../utils/constants';
+import { Draft, Post } from '../types/types';
 
 
 // Define a estrutura do Post
-export interface Post {
+/*export interface Post {
   text: string;
   image: string;
   book: string;
@@ -14,19 +15,21 @@ export interface Post {
   verse: number;
   passage: string;
   createdAt?: Date;
-}
+}*/
 
 // Função para buscar posts do Firestore
-export const fetchFirestorePosts = (
+
+/*export const fetchFirestorePosts = (
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>,
   setFirestoreStatus: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const postsCollection = collection(dbFirestore, COLLECTIONS.COLLECTION_POSTS);
   const unsubscribe = onSnapshot(postsCollection, (snapshot) => {
+
     const postsList = snapshot.docs.map(doc => {
       const data = doc.data() as Post;
       return {
-        id: doc.id,
+        //id: doc.id,
         ...data,
         createdAt: data.createdAt instanceof Timestamp ? convertDateFirestore(data.createdAt) : new Date(),
       };
@@ -47,7 +50,7 @@ export const fetchFirestorePosts = (
   });
 
   return unsubscribe; // Retorne a função de unsubscribe
-};
+};*/
 
 // Função para adicionar um novo post ao Firestore
 export const addFirestorePost = async (post: Post) => {
@@ -74,10 +77,14 @@ export const addFirestorePost = async (post: Post) => {
 };
 
 // Função para adicionar um novo post, removendo campos indesejados
-export const createAndAddPost = async (post: Post & { id?: string }) => {
-  const { id, ...postToSave } = post; // Remove o campo id
-  await addFirestorePost(postToSave);
+export const createAndAddPost = async (post: Post) => { 
+  await addFirestorePost(post);
 };
+
+// export const createAndAddPost = async (post: Post & { id?: string }) => {
+//   const { id, ...postToSave } = post; // Remove o campo id
+//   await addFirestorePost(postToSave);
+// };
 
 // Função para atualizar um post existente no Firestore pelo ID
 export const updateFirestorePost = async (postId: string, data: Partial<Post>) => {
@@ -103,7 +110,7 @@ export const deleteFirestorePostById = async (postId: string) => {
 };
 
 // Função para adicionar um rascunho ao Firestore
-export const addFirestoreDraft = async (draft: Post) => {
+export const addFirestoreDraft = async (draft: Draft) => {
   try {
     const draftRef = doc(collection(dbFirestore, 'drafts'));
     await setDoc(draftRef, {

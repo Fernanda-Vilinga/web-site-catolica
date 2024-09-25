@@ -12,14 +12,16 @@ export default class DraftDao {
         return new Promise( async (resolve, reject) => {
           try {
             const collectionRef = collection(dbFirestore, COLLECTIONS.COLLECTION_DRAFTS)
-            await addDoc(collectionRef, draft)
+          let docRef =  await addDoc(collectionRef, draft)
+
+            const draftWithId = { ...draft, id: docRef.id };
       
-            resolve(draft)
+            resolve(draftWithId)
           } catch (error) {
             reject(new Error(`Erro ao adicionar o draft: ${error}`));
           }
         })
-      }
+    }
 
     getAllWithDrafts(): Promise<Draft[]> {
         return new Promise((resolve, reject) => {

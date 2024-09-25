@@ -8,22 +8,11 @@ import {
   TabPanels,
   Tab,
   TabPanel,
-  IconButton,
   SimpleGrid,
   Button
 } from '@chakra-ui/react';
-import {
-  MdFavorite,
-  MdMessage,
-  MdEdit,
-  MdDelete
-} from 'react-icons/md';
 import Header from './HearderUI'; 
 //import AdicionarVersiculo from './AdicionarVersiculoUI';
-import {
-  addDraft,
- // getDrafts
-} from '../repositorios/DraftRepositorios';
 // import {
 //   fetchPosts,
 //   deletePost as deletePostById,
@@ -33,9 +22,10 @@ import {
 import { usePostState } from '../repositorios/usePostState';
 import { useDraftState } from '../repositorios/useDraftState';
 import AdicionarVersiculo from './AdicionarVersiculoUI';
-import { publishPost, deletePost } from '../repositorios/PostRepositorios';
 import { Draft, Post } from '../types/types';
-import { deleteDraft } from '../repositorios/DraftRepositorios';
+import InfoDraftPage from './components/InfoDraftPage';
+import InfoPostPage from './components/InfoPostPage';
+
 
 // interface Post {
 //   id?: string;
@@ -49,23 +39,6 @@ import { deleteDraft } from '../repositorios/DraftRepositorios';
 
 const headerBgColor = '#F5F5F5';
 
-const formatDate = (date: Date | undefined) => {
-  if (!date) return 'Data inválida';
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
-const extractTextAfterReference = (text: string) => {
-  const cleanedText = text.replace('passagembiblic', '').trim();
-  const splitText = cleanedText.split(' - ');
-  return splitText.length > 1 ? splitText[1] : cleanedText;
-};
-
 export default  function AppPage(): JSX.Element {
   // const [drafts, setDrafts] = useState<Post[]>([]);
   // const [posts, setPosts] = useState<Post[]>([]);
@@ -77,8 +50,11 @@ export default  function AppPage(): JSX.Element {
   const drafts = useDraftState((state) => state.drafts);
   const getAllWithoutPosts = usePostState((state) => state.getAllWithoutPosts);
   const getAllWithoutDrafts = useDraftState((state) => state.getAllWithoutDrafts);
+  const addDraft = useDraftState((state) => state.addDraft)
+
   const deleteGraftById = useDraftState((state) => state.deleteGraftById);
   const deletePostById = usePostState((state) => state.deletePostById);
+  const publishPost = usePostState((state) => state.publishPost)
 
   useEffect(() => {
      getAllWithoutPosts()
@@ -105,10 +81,7 @@ export default  function AppPage(): JSX.Element {
 
   const handleSaveOrUpdate = async (draft: Draft) => {
     try {
-     await addDraft(draft);
-     // const draftsData = await getDrafts();
-    //  const draftsData = drafts
-    //  setDrafts(Array.isArray(draftsData) ? draftsData : []);
+      addDraft(draft)
       setEditingDraft(null);
       setIsModalOpen(false);
     } catch (error) {
@@ -116,11 +89,10 @@ export default  function AppPage(): JSX.Element {
     }
   };
 
-  const handlePublish = async (draft: Post) => {
+  const handlePublish = async (draft: Draft) => {
     try {
-      // await publishPost(draft);
-      // await deleteDraftById(draft.id!);
-      // setDrafts(drafts.filter(d => d.id !== draft.id));
+       publishPost(draft);
+       deleteGraftById(draft.id ?? "")
     } catch (error) {
       console.error('Erro ao publicar post:', error);
     }
@@ -141,13 +113,11 @@ export default  function AppPage(): JSX.Element {
 
   const handleDeletePostById = async (post: Post) => {
     try {
-      deletePostById(post.id);
+      deletePostById(post.id ?? "");
     } catch (error) {
       console.error('Erro ao excluir post:', error);
     }
   };
-
-
 
   const handleOpenAddVersiculo = () => {
     setEditingDraft(null);
@@ -215,87 +185,12 @@ export default  function AppPage(): JSX.Element {
                       <Text>Nenhum rascunho ainda.</Text>
                     ) : (
                       drafts.map((draft, index) => (
-                        <Box
-                          key={draft.id || `draft-${index}`} // Chave única
-                          p={4}
-                          borderBottom="1px solid #ddd"
-                          borderRadius="md"
-                          bg="white"
-                          boxShadow="md"
-                          position="relative"
-                          display="flex"
-                          flexDirection="column"
-                          overflow="hidden"
-                        >
-                          {draft.image && (
-                            <Box
-                              position="relative"
-                              width="100%"
-                              height="200px"
-                              overflow="hidden"
-                              borderRadius="md"
-                            >
-                              <img
-                                src={draft.image}
-                                alt="Imagem do rascunho"
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  display: 'block'
-                                }}
-                              />
-                              <Box
-                                position="absolute"
-                                top="0"
-                                left="0"
-                                width="100%"
-                                height="100%"
-                                color="white"
-                                bg="rgba(0, 0, 0, 0.6)"
-                                p={2}
-                                display="flex"
-                                flexDirection="column"
-                                justifyContent="center"
-                                alignItems="center"
-                                textAlign="center"
-                                zIndex={1}
-                              >
-                                <Text mb={2} fontWeight="bold">{draft.passage}</Text>
-                                {draft.createdAt && (
-                                  <Text fontSize="xs" mt={2}>
-                                    Criado em: {formatDate(draft.createdAt)}
-                                  </Text>
-                                )}
-                                <Box
-                                  position="absolute"
-                                  top="4px"
-                                  right="2px"
-                                  zIndex={2}
-                                  display="flex"
-                                  flexDirection="row"
-                                  alignItems="center"
-                                  gap={2}
-                                >
-                                  <Button
-                                    colorScheme="green"
-                                   // onClick={() => handlePublish(draft)}
-                                    onClick={() => console.log("Test")}
-                                  >
-                                    Publicar
-                                  </Button>
-                                  <IconButton
-                                    icon={<MdDelete />}
-                                    aria-label="Excluir"
-                                    variant="ghost"
-                                    color="white"
-                                    onClick={() => handleDeleteDraftById(draft)}
-                                  />
-                                </Box>
-                              </Box>
-                            </Box>
-                          )}
-                        </Box>
+                        <InfoDraftPage 
+                            draft={draft} 
+                            index={index}
+                            handleDeleteDraftById={handleDeleteDraftById}
+                            handlePublish={() => handlePublish(draft)}
+                         />
                       ))
                     )}
                   </SimpleGrid>
@@ -306,121 +201,12 @@ export default  function AppPage(): JSX.Element {
                       <Text>Nenhuma publicação ainda.</Text>
                     ) : (
                       posts.map((post, index) => (
-                        <Box
-                          key={post.id || `post-${index}`} // Chave única
-                          p={4}
-                          borderBottom="1px solid #ddd"
-                          borderRadius="md"
-                          bg="white"
-                          boxShadow="md"
-                          position="relative"
-                          display="flex"
-                          flexDirection="column"
-                          overflow="hidden"
-                        >
-                          {post.image && (
-                            <Box
-                              position="relative"
-                              width="100%"
-                              height="200px"
-                              overflow="hidden"
-                              borderRadius="md"
-                            >
-                              <img
-                                src={post.image}
-                                alt="Imagem da publicação"
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  display: 'block'
-                                }}
-                              />
-                              <Box
-                                position="absolute"
-                                top="0"
-                                left="0"
-                                width="100%"
-                                height="100%"
-                                color="white"
-                                bg="rgba(0, 0, 0, 0.6)"
-                                p={4}
-                                display="flex"
-                                flexDirection="column"
-                                justifyContent="center"
-                                alignItems="center"
-                                textAlign="center"
-                                zIndex={1}
-                              >
-                                <Text mb={2} fontWeight="bold">{post.passage}</Text>
-                                <Text mb={2}>{extractTextAfterReference(post.text)}</Text>
-                                {post.createdAt && (
-                                  <Text fontSize="xs" mt={2}>
-                                    Criado em: {formatDate(post.createdAt)}
-                                  </Text>
-                                )}
-                                <Box
-                                  position="absolute"
-                                  top="4px"
-                                  right="2px"
-                                  zIndex={2}
-                                  display="flex"
-                                  flexDirection="row"
-                                  alignItems="center"
-                                  gap={2}
-                                >
-                                  <IconButton
-                                    icon={<MdEdit />}
-                                    aria-label="Editar"
-                                    variant="ghost"
-                                    color="white"
-                                    onClick={() => handleEditDraft(post)}
-                                  />
-                                  <IconButton
-                                    icon={<MdDelete />}
-                                    aria-label="Excluir"
-                                    variant="ghost"
-                                    color="white"
-                                    onClick={() => handleDeletePostById(post)}
-                                  />
-                                </Box>
-                                <Box
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="100%"
-                                  p={2}
-                                  display="flex"
-                                  justifyContent="space-between"
-                                  alignItems="center"
-                                  zIndex={2}
-                                  bg="rgba(0, 0, 0, 0.3)"
-                                >
-                                  <Box textAlign="center" color="white">
-                                    <IconButton
-                                      color="white"
-                                      icon={<MdFavorite />}
-                                      aria-label="Curtir"
-                                      variant="ghost"
-                                    />
-                                    {/* <Text fontSize="sm" mt={1}>{post.likes || 0}</Text> */}
-                                    {/* <Text fontSize="sm" mt={1}>{post.text}</Text> */}
-                                  </Box>
-                                  <Box textAlign="center" color="white">
-                                    <IconButton
-                                      color="white"
-                                      icon={<MdMessage />}
-                                      aria-label="Comentário"
-                                      variant="ghost"
-                                    />
-                                    {/* <Text fontSize="sm" mt={1}>{post.comments || 0}</Text> */}
-                                    {/* <Text fontSize="sm" mt={1}>{post.text}</Text> */}
-                                  </Box>
-                                </Box>
-                              </Box>
-                            </Box>
-                          )}
-                        </Box>
+                         <InfoPostPage 
+                            post={post} 
+                            index={index}
+                            handleDeletePostById={handleDeletePostById}
+                            handleEditDraft={handleEditDraft}
+                          />   
                       ))
                     )}
                   </SimpleGrid>

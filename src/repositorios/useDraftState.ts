@@ -12,6 +12,7 @@ interface State {
 interface Actions {
     getAllWithoutDrafts: () => void
     deleteGraftById: (draftId: string) => void
+    addDraft: (draft: Draft) => void
 }
 
 const initialState: State = {
@@ -22,6 +23,23 @@ const initialState: State = {
 
 export const useDraftState = create<Actions & State>()((set) => ({
      ...initialState,
+
+      async addDraft(draft: Draft) {
+        set(() => ({ isLoading: true }))
+
+        try {
+          let draftResult = await DraftDao.shared.addDraft(draft)
+          
+          set((state) => ({
+            drafts: [...state.drafts, draftResult]
+          }))
+
+        } catch (error) {
+          console.error('Erro ao adicionar draft:', error);
+        } finally {
+            set(() => ({ isLoading: false }));
+        }
+      },
 
       async getAllWithoutDrafts() {
             set(() => ({ isLoading: true }));
@@ -42,6 +60,8 @@ export const useDraftState = create<Actions & State>()((set) => ({
       },
 
       async deleteGraftById(draftId: string) {
+        set(() => ({ isLoading: true}))
+
             try {
                 await DraftDao.shared.deleteDraft(draftId)
 
@@ -50,6 +70,8 @@ export const useDraftState = create<Actions & State>()((set) => ({
                 }))
             } catch (error) {
                 throw error
+            } finally {
+                set(() => ({ isLoading: false}))
             }
       }
 }))

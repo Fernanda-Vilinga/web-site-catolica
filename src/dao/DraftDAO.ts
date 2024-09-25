@@ -1,9 +1,5 @@
-
-import { addDoc, collection, getFirestore } from 'firebase/firestore';
 import { dbPromise } from '../config/IndexedDbConfig';
-import { Draft, Post } from '../types/types';
-import { addFirestorePost } from './PostDAO';
-import { COLLECTIONS } from '../utils/constants';
+
 
 // Função para recuperar todos os rascunhos
 export async function getDrafts() {
@@ -24,21 +20,6 @@ export async function getDrafts() {
 //   const db = await dbPromise;
 //   return db.add('drafts', draft);
 // }
-
-
-export async function addDraft(post: Post): Promise<Draft> {
-  return new Promise( async (resolve, reject) => {
-    try {
-      const collectionRef = collection(getFirestore(), COLLECTIONS.COLLECTION_POSTS)
-      await addDoc(collectionRef, post)
-
-      resolve(post)
-    } catch (error) {
-      reject(new Error(`Erro ao adicionar o draft: ${error}`));
-    }
-  })
-
-}
 
 // Função para deletar um rascunho pelo ID
 export async function deleteDraft(id: number) {

@@ -19,16 +19,16 @@ import {
 import { MdFavoriteBorder, MdMessage } from 'react-icons/md';
 import { getBibleData, BibleBook } from '../data/bibleData';
 import defaultImage from '../assets/paisagem.jpeg';
-import { addDraft as addDraftRepo } from '../repositorios/DraftRepositorios';
-import { Post } from '../types/types';
-//import { addPost as addPostRepo, updatePost as updatePostRepo } from '../repositorios/PostRepositorios';
+import { Draft, Post } from '../types/types';
+import { useDraftState } from '../repositorios/useDraftState';
+import { usePostState } from '../repositorios/usePostState';
 
 interface AdicionarVersiculoProps {
   isOpen: boolean;
   onClose: () => void;
   draft: Post | null;
   //draft?: Post & { id?: string };
-  onSaveDraft: (draft: Post) => void;
+  onSaveDraft: (draft: Draft) => void;
   onPublish: (post: Post) => void;
 }
 
@@ -39,6 +39,9 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   onSaveDraft,
   onPublish,
 }) => {
+  const updatePostById = usePostState((state) => state.updatePostById);
+  const addPost = usePostState((state) => state.addPost);
+  
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [selectedText, setSelectedText] = useState<string>('');
@@ -51,6 +54,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
+
 
   useEffect(() => {
     setBibleBooks(getBibleData());
@@ -146,7 +150,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   };
 
   const handleSaveDraft = async () => {
-    if (loading) return;
+    //if (loading) return;
 
     if (!isFormValid()) {
       setError('Por favor, preencha todos os campos obrigatórios.');
@@ -156,8 +160,7 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
     setLoading(true);
 
     try {
-      const newDraft: Post = {
-        id: draft?.id ?? "",
+      const newDraft: Draft = {
         text: selectedText || 'Texto do versículo',
         image: imagePreview,
         book: selectedBook,
@@ -166,8 +169,6 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
         passage: getFormattedReference(),
         createdAt: new Date(),
       };
-
-      await addDraftRepo(newDraft);
       
       onSaveDraft(newDraft);
       toast({
@@ -192,6 +193,52 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
     }
   };
 
+  const handleUpdatePost = async () => {
+    if (loading) return;
+  
+    if (!isFormValid()) {
+      setError('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+  
+    setLoading(true);
+  
+    try {
+      const post: Post = {
+        id: draft?.id,
+        text: selectedText || 'Texto do versículo',
+        image: imagePreview || '',
+        book: selectedBook,
+        chapter: selectedChapter,
+        verse: selectedVerse,
+        passage: getFormattedReference(),
+        createdAt: draft ? draft.createdAt : new Date(),
+      };
+  
+      updatePostById(post.id ?? "", post)
+      toast({
+        title: 'Post atualizado.',
+        description: 'Seu post foi atualizado com sucesso.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    
+      onClose();
+    } catch (error) {
+      console.error('Erro ao publicar:', error);
+      toast({
+        title: 'Erro ao publicar.',
+        description: 'Ocorreu um problema ao publicar o post.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handlePublish = async () => {
     if (loading) return;
   
@@ -204,7 +251,6 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   
     try {
       const post: Post = {
-        id: draft?.id ?? "",
         text: selectedText || 'Texto do versículo',
         image: imagePreview || '',
         book: selectedBook,
@@ -214,29 +260,16 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
         createdAt: draft ? draft.createdAt : new Date(),
       };
   
-      if (draft) {
-        //TODO: Adicionar Post
-       // await updatePostRepo(post);
-        onPublish(post);
-        toast({
-          title: 'Post atualizado.',
-          description: 'Seu post foi atualizado com sucesso.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-       // await addPostRepo(post);
-        onPublish(post);
-        toast({
-          title: 'Post salvo.',
-          description: 'Seu post foi publicado com sucesso.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-  
+      addPost(post);
+      
+      toast({
+        title: 'Post salvo.',
+        description: 'Seu post foi publicado com sucesso.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      
       onClose();
     } catch (error) {
       console.error('Erro ao publicar:', error);
@@ -468,10 +501,10 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
             )}
             <Button
               variant="solid"
-              onClick={handlePublish}
+              onClick={draft? handleUpdatePost : handlePublish}
               isDisabled={loading}
             >
-              {loading ? <Spinner size="sm" /> : (draft ? 'Atualizar e publicar' : 'Salvar e publicar')}
+              {loading ? <Spinner size="sm" /> : (draft ? 'Atualizar' : 'Salvar e publicar')}
             </Button>
           </Box>
         </ModalFooter>

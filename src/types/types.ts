@@ -1,7 +1,7 @@
 // types.ts
 
 export interface Post  {
-    id: string;
+    id?: string;
     book: string;
     text: string;
     createdAt: Date;
