@@ -36,7 +36,8 @@ export async function publishDraft(id: number) {
     throw new Error('Draft não encontrado');
   }
 
-   //await addFirestorePost({ ...draft, createdAt: draft.createdAt || new Date() });
-  // await addFirestorePost({ ...draft, createdAt: draft.createdAt || new Date() });
+  //await addFirestorePost({ ...draft, createdAt: draft.createdAt || new Date() });
+
   await deleteDraft(id);
 }
+
