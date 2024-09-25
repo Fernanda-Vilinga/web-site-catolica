@@ -6,7 +6,6 @@ import { extractTextAfterReference, formatDate } from "../../utils/helpers";
 
 interface InfoDraftProps {
     post: Post
-    index: any
     handleDeletePostById: (post: Post) => void
     handleEditDraft: (post: Post) => void
 }
@@ -15,14 +14,12 @@ export default function InfoPostPage(props: InfoDraftProps): JSX.Element {
 
     const {
         post,
-        index,
         handleDeletePostById,
         handleEditDraft
     } = props
 
     return (
         <Box
-        key={post.id || `post-${index}`}
         p={4}
         borderBottom="1px solid #ddd"
         borderRadius="md"

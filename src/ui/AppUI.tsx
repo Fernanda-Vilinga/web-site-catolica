@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Text,
@@ -9,23 +8,15 @@ import {
   Tab,
   TabPanel,
   SimpleGrid,
-  Button
-} from '@chakra-ui/react';
-import Header from './HearderUI'; 
-//import AdicionarVersiculo from './AdicionarVersiculoUI';
-// import {
-//   fetchPosts,
-//   deletePost as deletePostById,
-//   publishPost,
-//   addDraft
-// } from '../repositorios/PostRepositorios';
-import { usePostState } from '../repositorios/usePostState';
-import { useDraftState } from '../repositorios/useDraftState';
-import AdicionarVersiculo from './AdicionarVersiculoUI';
-import { Draft, Post } from '../types/types';
-import InfoDraftPage from './components/InfoDraftPage';
-import InfoPostPage from './components/InfoPostPage';
-
+  Button,
+} from "@chakra-ui/react";
+import Header from "./HearderUI";
+import { usePostState } from "../repositorios/usePostState";
+import { useDraftState } from "../repositorios/useDraftState";
+import AdicionarVersiculo from "./AdicionarVersiculoUI";
+import { Draft, Post } from "../types/types";
+import InfoDraftPage from "./components/InfoDraftPage";
+import InfoPostPage from "./components/InfoPostPage";
 
 // interface Post {
 //   id?: string;
@@ -37,64 +28,46 @@ import InfoPostPage from './components/InfoPostPage';
 //   comments?: number;
 // }
 
-const headerBgColor = '#F5F5F5';
+const headerBgColor = "#F5F5F5";
 
-export default  function AppPage(): JSX.Element {
-  // const [drafts, setDrafts] = useState<Post[]>([]);
-  // const [posts, setPosts] = useState<Post[]>([]);
-  const [firestoreStatus, setFirestoreStatus] = useState<string>('Desconectado');
-  const [activeTab, setActiveTab] = useState<'drafts' | 'posts'>('posts');
+export default function AppPage(): JSX.Element {
+
+  const [activeTab, setActiveTab] = useState<"drafts" | "posts">("posts");
   const [editingDraft, setEditingDraft] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const posts = usePostState((state) => state.posts);
   const drafts = useDraftState((state) => state.drafts);
   const getAllWithoutPosts = usePostState((state) => state.getAllWithoutPosts);
-  const getAllWithoutDrafts = useDraftState((state) => state.getAllWithoutDrafts);
-  const addDraft = useDraftState((state) => state.addDraft)
+  const getAllWithoutDrafts = useDraftState(
+    (state) => state.getAllWithoutDrafts
+  );
+  const addDraft = useDraftState((state) => state.addDraft);
 
   const deleteGraftById = useDraftState((state) => state.deleteGraftById);
   const deletePostById = usePostState((state) => state.deletePostById);
-  const publishPost = usePostState((state) => state.publishPost)
+  const publishPost = usePostState((state) => state.publishPost);
 
   useEffect(() => {
-     getAllWithoutPosts()
-     getAllWithoutDrafts()
-  }, [])
+    getAllWithoutPosts();
+    getAllWithoutDrafts();
+  }, []);
 
-  // useEffect(() => {
-  //   const fetchInitialData = async () => {
-  //     try {
-  //       const draftsData = await getDrafts();
-  //       //setDrafts(Array.isArray(draftsData) ? draftsData : []);
-  //     } catch (error) {
-  //       console.error('Erro ao buscar dados iniciais:', error);
-  //     }
-  //   };
-
-  //   fetchInitialData();
-  // }, []);
-
-  // useEffect(() => {
-  //   const unsubscribe = fetchPosts(setPosts, setFirestoreStatus);
-  //   return () => unsubscribe();
-  // }, []);
-
-  const handleSaveOrUpdate = async (draft: Draft) => {
+  const handleSaveDraft = async (draft: Draft) => {
     try {
-      addDraft(draft)
+      addDraft(draft);
       setEditingDraft(null);
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Erro ao salvar ou atualizar rascunho:', error);
+      console.error("Erro ao salvar rascunho:", error);
     }
   };
 
   const handlePublish = async (draft: Draft) => {
     try {
-       publishPost(draft);
-       deleteGraftById(draft.id ?? "")
+      publishPost(draft);
+      deleteGraftById(draft.id ?? "");
     } catch (error) {
-      console.error('Erro ao publicar post:', error);
+      console.error("Erro ao publicar post:", error);
     }
   };
 
@@ -107,7 +80,7 @@ export default  function AppPage(): JSX.Element {
     try {
       deleteGraftById(draft.id ?? "");
     } catch (error) {
-      console.error('Erro ao excluir rascunho:', error);
+      console.error("Erro ao excluir rascunho:", error);
     }
   };
 
@@ -115,7 +88,7 @@ export default  function AppPage(): JSX.Element {
     try {
       deletePostById(post.id ?? "");
     } catch (error) {
-      console.error('Erro ao excluir post:', error);
+      console.error("Erro ao excluir post:", error);
     }
   };
 
@@ -159,19 +132,28 @@ export default  function AppPage(): JSX.Element {
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             draft={editingDraft}
-            onSaveDraft={handleSaveOrUpdate}
-            onPublish={handlePublish}
-           // onImageChange={handleImageChange}
+            onSaveDraft={handleSaveDraft}
+            // onImageChange={handleImageChange}
           />
         </Box>
 
-        <Box display="flex" flexDirection="column" alignItems="center" mb={4} gap={4}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          mb={4}
+          gap={4}
+        >
           <Box width="100%" maxWidth="800px">
-            <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">Visualizar:</Text>
+            <Text fontSize="lg" fontWeight="bold" mb={2} textAlign="center">
+              Visualizar:
+            </Text>
             <Tabs
               variant="enclosed"
               isLazy
-              onChange={(index) => setActiveTab(index === 0 ? 'drafts' : 'posts')}
+              onChange={(index) =>
+                setActiveTab(index === 0 ? "drafts" : "posts")
+              }
               align="center"
             >
               <TabList>
@@ -185,12 +167,12 @@ export default  function AppPage(): JSX.Element {
                       <Text>Nenhum rascunho ainda.</Text>
                     ) : (
                       drafts.map((draft, index) => (
-                        <InfoDraftPage 
-                            draft={draft} 
-                            index={index}
-                            handleDeleteDraftById={handleDeleteDraftById}
-                            handlePublish={() => handlePublish(draft)}
-                         />
+                        <InfoDraftPage
+                          key={draft.id || `draft-${index}`}
+                          draft={draft}
+                          handleDeleteDraftById={handleDeleteDraftById}
+                          handlePublish={() => handlePublish(draft)}
+                        />
                       ))
                     )}
                   </SimpleGrid>
@@ -201,12 +183,12 @@ export default  function AppPage(): JSX.Element {
                       <Text>Nenhuma publicação ainda.</Text>
                     ) : (
                       posts.map((post, index) => (
-                         <InfoPostPage 
-                            post={post} 
-                            index={index}
-                            handleDeletePostById={handleDeletePostById}
-                            handleEditDraft={handleEditDraft}
-                          />   
+                        <InfoPostPage
+                          key={post.id || `post-${index}`}
+                          post={post}
+                          handleDeletePostById={handleDeletePostById}
+                          handleEditDraft={handleEditDraft}
+                        />
                       ))
                     )}
                   </SimpleGrid>
@@ -218,5 +200,4 @@ export default  function AppPage(): JSX.Element {
       </Box>
     </Box>
   );
-};
-
+}

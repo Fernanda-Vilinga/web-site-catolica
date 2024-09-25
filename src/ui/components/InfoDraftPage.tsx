@@ -5,7 +5,6 @@ import { formatDate } from "../../utils/helpers";
 
 interface InfoDraftProps {
     draft: Draft
-    index: any
     handleDeleteDraftById: (draft: Draft) => void;
     handlePublish: (draft: Draft) => void;
 }
@@ -14,14 +13,12 @@ export default function InfoDraftPage(props: InfoDraftProps): JSX.Element {
 
     const {
         draft,
-        index,
         handleDeleteDraftById, 
         handlePublish
     } = props
 
   return (
     <Box
-      key={draft.id || `draft-${index}`} 
       p={4}
       borderBottom="1px solid #ddd"
       borderRadius="md"

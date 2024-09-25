@@ -85,8 +85,9 @@ export const usePostState = create<Actions & State>()((set) => ({
             await PostDao.shared.updatePost(postId, post)
 
             set((state) => ({
-                posts: state.posts.map((oldPost) => oldPost.id === postId ? {...oldPost, post
-                }: oldPost)
+                posts: state.posts.map((oldPost) =>
+                    oldPost.id === postId ? { ...oldPost, ...post } : oldPost,
+                )
             }))
         } catch (error) {
             console.error("Erro ao atualizar o post", error);

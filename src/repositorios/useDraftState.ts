@@ -1,6 +1,7 @@
+import DraftDao from "../database/DraftDao";
 import { Draft } from "../types/types"
 import { create } from "zustand";
-import DraftDao from "../database/DraftDao";
+
 
 
 interface State {
@@ -28,12 +29,15 @@ export const useDraftState = create<Actions & State>()((set) => ({
         set(() => ({ isLoading: true }))
 
         try {
-          let draftResult = await DraftDao.shared.addDraft(draft)
+          DraftDao.shared.addDraft(draft)
+            .then(() => {
+                set((state) => ({ drafts: [...state.drafts, draft] }))
+            })
+            .catch(error => {
+                console.log(error)
+                set(() => ({ errorMessage: "Ocorreu um erro desconhecido ao cadastrar draft" }))
+            })
           
-          set((state) => ({
-            drafts: [...state.drafts, draftResult]
-          }))
-
         } catch (error) {
           console.error('Erro ao adicionar draft:', error);
         } finally {
@@ -47,7 +51,6 @@ export const useDraftState = create<Actions & State>()((set) => ({
             try {
                 const newDrafts = await DraftDao.shared.getAllWithDrafts();
 
-                console.log("newDrafts", newDrafts)
                 set(() => ({
                     drafts: newDrafts, 
                 }));
@@ -55,23 +58,24 @@ export const useDraftState = create<Actions & State>()((set) => ({
                 set(() => ({ errorMessage: "Erro ao carregar drafts" }));
                 console.error(error);
             } finally {
-                set(() => ({ isLoading: false }));
+                set(() => ({ isLoading: false }));  
             }
       },
 
       async deleteGraftById(draftId: string) {
         set(() => ({ isLoading: true}))
 
-            try {
-                await DraftDao.shared.deleteDraft(draftId)
-
+            await DraftDao.shared.deleteDraft(draftId)
+            .then(() => {
                 set((state) => ({
                     drafts: state.drafts.filter( draft => draft.id !== draftId)
                 }))
-            } catch (error) {
-                throw error
-            } finally {
+            })
+            .catch(error => {
+                set(() => ({ errorMessage: error }))
                 set(() => ({ isLoading: false}))
-            }
+            })
+            
+            
       }
 }))

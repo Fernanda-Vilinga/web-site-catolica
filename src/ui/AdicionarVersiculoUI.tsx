@@ -28,7 +28,6 @@ interface AdicionarVersiculoProps {
   draft: Post | null;
   //draft?: Post & { id?: string };
   onSaveDraft: (draft: Draft) => void;
-  onPublish: (post: Post) => void;
 }
 
 export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
@@ -36,7 +35,6 @@ export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   onClose,
   draft,
   onSaveDraft,
-  onPublish,
 }) => {
   const updatePostById = usePostState((state) => state.updatePostById);
   const addPost = usePostState((state) => state.addPost);
