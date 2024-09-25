@@ -1,29 +1,19 @@
 import {
-  getDrafts as getDraftsFromDAO,
-  addDraft as addDraftToDAO,
   deleteDraft as deleteDraftFromDAO,
   publishDraft as publishDraftFromDAO
 } from '../dao/DraftDAO';
-import { Post } from '../dao/PostDAO';
+
 
 // Obter todos os rascunhos
-export const getDrafts = async (): Promise<Post[]> => {
-  try {
-    return await getDraftsFromDAO();
-  } catch (error) {
-    console.error('Erro ao obter drafts:', error);
-    return [];
-  }
-};
+// export const getDrafts = async (): Promise<Post[]> => {
+//   try {
+//     return await getDraftsFromDAO();
+//   } catch (error) {
+//     console.error('Erro ao obter drafts:', error);
+//     return [];
+//   }
+// };
 
-// Adicionar um novo rascunho
-export const addDraft = async (draft: Post): Promise<number | void> => {
-  try {
-    return await addDraftToDAO(draft);
-  } catch (error) {
-    console.error('Erro ao adicionar draft:', error);
-  }
-};
 
 // Deletar um rascunho pelo ID
 export const deleteDraft = async (id: number): Promise<void> => {

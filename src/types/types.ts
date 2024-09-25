@@ -1,19 +1,33 @@
 // types.ts
 
-export interface Post {
-    id: string;
+export interface Post  {
+    id?: string;
     book: string;
     text: string;
     createdAt: Date;
-    image?: string; // Adiciona um campo opcional para imagens
+    image?: string;
+    passage: string
+    chapter: number
+    verse: number 
   }
   
+  // export interface Draft {
+  //   id?: string; // Pode ser undefined para novos rascunhos
+  //   book: string;
+  //   text: string;
+  //   createdAt?: Date; // Pode ser undefined para novos rascunhos
+  //   image?: string;
+  //   passage: string // Adiciona um campo opcional para imagens
+  // }
   export interface Draft {
-    id?: string; // Pode ser undefined para novos rascunhos
+    id?: string;
     book: string;
     text: string;
-    createdAt?: Date; // Pode ser undefined para novos rascunhos
-    image?: string; // Adiciona um campo opcional para imagens
+    createdAt: Date;
+    image?: string;
+    passage: string
+    chapter: number
+    verse: number
   }
   
   export interface FirebaseError {

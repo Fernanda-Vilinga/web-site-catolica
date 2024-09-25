@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from "react";
 import {
   Box,
   Button,
@@ -15,33 +15,34 @@ import {
   IconButton,
   useToast,
   Spinner,
-} from '@chakra-ui/react';
-import { MdFavoriteBorder, MdMessage } from 'react-icons/md';
-import { getBibleData, BibleBook } from '../data/bibleData';
-import defaultImage from '../assets/paisagem.jpeg';
-import { Post } from '../dao/PostDAO';
-import { addDraft as addDraftRepo } from '../repositorios/DraftRepositorios';
-import { addPost as addPostRepo, updatePost as updatePostRepo } from '../repositorios/PostRepositorios';
+} from "@chakra-ui/react";
+import { MdFavoriteBorder, MdMessage } from "react-icons/md";
+import { getBibleData, BibleBook } from "../data/bibleData";
+import defaultImage from "../assets/paisagem.jpeg";
+import { Draft, Post } from "../types/types";
+import { usePostState } from "../repositorios/usePostState";
 
 interface AdicionarVersiculoProps {
   isOpen: boolean;
   onClose: () => void;
-  draft?: Post & { id?: string };
-  onSaveDraft: (draft: Post) => void;
-  onPublish: (post: Post) => void;
+  draft: Post | null;
+  //draft?: Post & { id?: string };
+  onSaveDraft: (draft: Draft) => void;
 }
 
-const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
+export const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   isOpen,
   onClose,
   draft,
   onSaveDraft,
-  onPublish,
 }) => {
+  const updatePostById = usePostState((state) => state.updatePostById);
+  const addPost = usePostState((state) => state.addPost);
+
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [selectedText, setSelectedText] = useState<string>('');
-  const [selectedBook, setSelectedBook] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [selectedText, setSelectedText] = useState<string>("");
+  const [selectedBook, setSelectedBook] = useState<string>("");
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [selectedVerse, setSelectedVerse] = useState<number>(1);
   const [bibleBooks, setBibleBooks] = useState<BibleBook[]>([]);
@@ -68,7 +69,11 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   useEffect(() => {
     const book = bibleBooks.find((book) => book.name === selectedBook);
     if (book) {
-      setVerses(book.chapters[selectedChapter - 1]?.map((_, index) => `Versículo ${index + 1}`) || []);
+      setVerses(
+        book.chapters[selectedChapter - 1]?.map(
+          (_, index) => `Versículo ${index + 1}`
+        ) || []
+      );
       setSelectedVerse(1);
     }
   }, [selectedChapter, selectedBook, bibleBooks]);
@@ -77,11 +82,14 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
     const book = bibleBooks.find((book) => book.name === selectedBook);
     if (book && selectedChapter && selectedVerse) {
       const versesList = book.chapters[selectedChapter - 1] || [];
-      setSelectedText(versesList[selectedVerse - 1] || '');
+      setSelectedText(versesList[selectedVerse - 1] || "");
     }
   }, [selectedVerse, selectedChapter, selectedBook, bibleBooks]);
 
-  const convertToBase64 = (file: File, callback: (base64String: string) => void) => {
+  const convertToBase64 = (
+    file: File,
+    callback: (base64String: string) => void
+  ) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       callback(reader.result as string);
@@ -106,10 +114,10 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (draft) {
-        setSelectedBook(draft.book || '');
+        setSelectedBook(draft.book || "");
         setSelectedChapter(draft.chapter || 1);
         setSelectedVerse(draft.verse || 1);
-        setSelectedText(draft.text || '');
+        setSelectedText(draft.text || "");
         setImagePreview(draft.image || imagePreview);
         setSelectedImage(null);
       } else {
@@ -130,7 +138,11 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
     }
   };
 
-  const handleSelectChange = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, parser: (value: string) => T) =>
+  const handleSelectChange =
+    <T,>(
+      setter: React.Dispatch<React.SetStateAction<T>>,
+      parser: (value: string) => T
+    ) =>
     (event: ChangeEvent<HTMLSelectElement>) => {
       setter(parser(event.target.value));
       setError(null);
@@ -139,24 +151,24 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   const getFormattedReference = () => {
     if (selectedBook && selectedChapter && selectedVerse) {
       const book = bibleBooks.find((book) => book.name === selectedBook);
-      return book ? `${book.name} ${selectedChapter}:${selectedVerse}` : '';
+      return book ? `${book.name} ${selectedChapter}:${selectedVerse}` : "";
     }
-    return '';
+    return "";
   };
 
   const handleSaveDraft = async () => {
     if (loading) return;
 
     if (!isFormValid()) {
-      setError('Por favor, preencha todos os campos obrigatórios.');
+      setError("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const newDraft: Post = {
-        text: selectedText || 'Texto do versículo',
+      const newDraft: Draft = {
+        text: selectedText || "Texto do versículo",
         image: imagePreview,
         book: selectedBook,
         chapter: selectedChapter,
@@ -165,22 +177,67 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
         createdAt: new Date(),
       };
 
-      await addDraftRepo(newDraft);
       onSaveDraft(newDraft);
       toast({
-        title: 'Rascunho salvo.',
-        description: 'Seu rascunho foi salvo com sucesso.',
-        status: 'success',
+        title: "Rascunho salvo.",
+        description: "Seu rascunho foi salvo com sucesso.",
+        status: "success",
         duration: 5000,
         isClosable: true,
       });
       onClose();
     } catch (error) {
-      console.error('Erro ao salvar rascunho:', error);
+      console.error("Erro ao salvar rascunho:", error);
       toast({
-        title: 'Erro ao salvar rascunho.',
-        description: 'Ocorreu um problema ao salvar o rascunho.',
-        status: 'error',
+        title: "Erro ao salvar rascunho.",
+        description: "Ocorreu um problema ao salvar o rascunho.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePost = async () => {
+    if (loading) return;
+
+    if (!isFormValid()) {
+      setError("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const post: Post = {
+        id: draft?.id,
+        text: selectedText || "Texto do versículo",
+        image: imagePreview || "",
+        book: selectedBook,
+        chapter: selectedChapter,
+        verse: selectedVerse,
+        passage: getFormattedReference(),
+        createdAt: draft ? draft.createdAt : new Date(),
+      };
+
+      updatePostById(post.id ?? "", post);
+      toast({
+        title: "Post atualizado.",
+        description: "Seu post foi atualizado com sucesso.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Erro ao publicar:", error);
+      toast({
+        title: "Erro ao publicar.",
+        description: "Ocorreu um problema ao publicar o post.",
+        status: "error",
         duration: 5000,
         isClosable: true,
       });
@@ -191,55 +248,42 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
 
   const handlePublish = async () => {
     if (loading) return;
-  
+
     if (!isFormValid()) {
-      setError('Por favor, preencha todos os campos obrigatórios.');
+      setError("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       const post: Post = {
-        id: draft?.id,
-        text: selectedText || 'Texto do versículo',
-        image: imagePreview || '',
+        text: selectedText || "Texto do versículo",
+        image: imagePreview || "",
         book: selectedBook,
         chapter: selectedChapter,
         verse: selectedVerse,
         passage: getFormattedReference(),
         createdAt: draft ? draft.createdAt : new Date(),
       };
-  
-      if (draft) {
-        await updatePostRepo(post);
-        onPublish(post);
-        toast({
-          title: 'Post atualizado.',
-          description: 'Seu post foi atualizado com sucesso.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      } else {
-        await addPostRepo(post);
-        onPublish(post);
-        toast({
-          title: 'Post salvo.',
-          description: 'Seu post foi publicado com sucesso.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-  
+
+      addPost(post);
+
+      toast({
+        title: "Post salvo.",
+        description: "Seu post foi publicado com sucesso.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
       onClose();
     } catch (error) {
-      console.error('Erro ao publicar:', error);
+      console.error("Erro ao publicar:", error);
       toast({
-        title: 'Erro ao publicar.',
-        description: 'Ocorreu um problema ao publicar o post.',
-        status: 'error',
+        title: "Erro ao publicar.",
+        description: "Ocorreu um problema ao publicar o post.",
+        status: "error",
         duration: 5000,
         isClosable: true,
       });
@@ -247,13 +291,12 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
       setLoading(false);
     }
   };
-  
-  
+
   const resetForm = () => {
     setSelectedImage(null);
     initializeDefaultImage();
-    setSelectedText('');
-    setSelectedBook('');
+    setSelectedText("");
+    setSelectedBook("");
     setSelectedChapter(1);
     setSelectedVerse(1);
     setChapters([]);
@@ -264,28 +307,57 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
   const isFormValid = () => selectedBook && selectedChapter && selectedVerse;
 
   return (
-    <Modal isOpen={isOpen} onClose={() => {
-      if (!loading) {
-        onClose();
-        resetForm();
-      }
-    }} size="6xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={() => {
+        if (!loading) {
+          onClose();
+          resetForm();
+        }
+      }}
+      size="6xl"
+    >
       <ModalOverlay />
       <ModalContent width="100%" maxWidth="1150px" mx={4} height="90vh">
-        <ModalHeader>{draft ? 'Editar versículo' : 'Adicionar versículo do dia'}</ModalHeader>
+        <ModalHeader>
+          {draft ? "Editar versículo" : "Adicionar versículo do dia"}
+        </ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Box display="flex" gap={6} flexDirection={{ base: 'column', md: 'row' }}>
-            <Box flex="2" bg="white" borderRadius="md" p={6} height="calc(100vh - 250px)" display="flex" flexDirection="column" justifyContent="space-between">
+          <Box
+            display="flex"
+            gap={6}
+            flexDirection={{ base: "column", md: "row" }}
+          >
+            <Box
+              flex="2"
+              bg="white"
+              borderRadius="md"
+              p={6}
+              height="calc(100vh - 250px)"
+              display="flex"
+              flexDirection="column"
+              justifyContent="space-between"
+            >
               <Box mb={6}>
                 {error && <Text color="red.500">{error}</Text>}
-                <Box display="flex" gap={6} mb={6} flexDirection={{ base: 'column', md: 'row' }}>
+                <Box
+                  display="flex"
+                  gap={6}
+                  mb={6}
+                  flexDirection={{ base: "column", md: "row" }}
+                >
                   <Box flex="1">
-                    <Text mb={2} fontWeight="bold">Livro</Text>
+                    <Text mb={2} fontWeight="bold">
+                      Livro
+                    </Text>
                     <Select
                       placeholder="Selecione o livro"
                       value={selectedBook}
-                      onChange={handleSelectChange(setSelectedBook, (value) => value)}
+                      onChange={handleSelectChange(
+                        setSelectedBook,
+                        (value) => value
+                      )}
                     >
                       {bibleBooks.map((book) => (
                         <option key={book.name} value={book.name}>
@@ -295,7 +367,9 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                     </Select>
                   </Box>
                   <Box flex="1">
-                    <Text mb={2} fontWeight="bold">Capítulo</Text>
+                    <Text mb={2} fontWeight="bold">
+                      Capítulo
+                    </Text>
                     <Select
                       placeholder="Selecione o capítulo"
                       value={selectedChapter}
@@ -309,7 +383,9 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                     </Select>
                   </Box>
                   <Box flex="1">
-                    <Text mb={2} fontWeight="bold">Versículo</Text>
+                    <Text mb={2} fontWeight="bold">
+                      Versículo
+                    </Text>
                     <Select
                       placeholder="Selecione o versículo"
                       value={selectedVerse}
@@ -324,23 +400,38 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                   </Box>
                 </Box>
                 <Box mb={0} display="flex" alignItems="center">
-                  <Box borderRadius="md" p={4} bg="white" boxShadow="md" height="220px">
-                    <Text>{selectedText || 'Selecione um versículo'}</Text>
+                  <Box
+                    borderRadius="md"
+                    p={4}
+                    bg="white"
+                    boxShadow="md"
+                    height="220px"
+                  >
+                    <Text>{selectedText || "Selecione um versículo"}</Text>
                   </Box>
                 </Box>
               </Box>
               <Box display="flex" alignItems="center">
-                <Button as="label" htmlFor="imageUpload" variant="outline" colorScheme="teal">
+                <Button
+                  as="label"
+                  htmlFor="imageUpload"
+                  variant="outline"
+                  colorScheme="teal"
+                >
                   Carregar Imagem
                   <Input
                     id="imageUpload"
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    style={{ display: 'none' }}
+                    style={{ display: "none" }}
                   />
                 </Button>
-                <Text ml={4}>{selectedImage ? selectedImage.name : 'Nenhuma imagem selecionada'}</Text>
+                <Text ml={4}>
+                  {selectedImage
+                    ? selectedImage.name
+                    : "Nenhuma imagem selecionada"}
+                </Text>
                 {selectedImage && (
                   <Button
                     ml={4}
@@ -356,7 +447,17 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                 )}
               </Box>
             </Box>
-            <Box flex="1" bg="white" borderRadius="md" boxShadow="md" p={0} width="770px" height="calc(98vh - 200px)" display="flex" flexDirection="column">
+            <Box
+              flex="1"
+              bg="white"
+              borderRadius="md"
+              boxShadow="md"
+              p={0}
+              width="770px"
+              height="calc(98vh - 200px)"
+              display="flex"
+              flexDirection="column"
+            >
               <Text fontWeight="bold" mt={6} textAlign="center" mr={40}>
                 Pré-visualização
               </Text>
@@ -374,8 +475,22 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                 justifyContent="center"
                 flexDirection="column"
               >
-                <Box width="100%" height="20%" bg="white" marginBottom={4} borderRadius="md">
-                  <Text fontWeight="bold" mt={10} width="100%" height="15%" color={'#6F3B52'} mr={10} fontSize={'lg'}>
+                <Box
+                  width="100%"
+                  height="20%"
+                  bg="white"
+                  marginBottom={4}
+                  borderRadius="md"
+                >
+                  <Text
+                    fontWeight="bold"
+                    mt={10}
+                    width="100%"
+                    height="15%"
+                    color={"#6F3B52"}
+                    mr={10}
+                    fontSize={"lg"}
+                  >
                     Versículo do dia
                   </Text>
                 </Box>
@@ -383,10 +498,10 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                   src={imagePreview}
                   alt="Pré-visualização"
                   style={{
-                    width: '100%',
-                    height: '72%',
-                    objectFit: 'cover',
-                    borderRadius: '5%',
+                    width: "100%",
+                    height: "72%",
+                    objectFit: "cover",
+                    borderRadius: "5%",
                   }}
                 />
                 <Box
@@ -414,7 +529,7 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                     </Text>
                   </Box>
                   <Text fontSize="sm" noOfLines={3} mb={4}>
-                    {selectedText || 'Texto do versículo'}
+                    {selectedText || "Texto do versículo"}
                   </Text>
                 </Box>
                 <Box
@@ -459,15 +574,21 @@ const AdicionarVersiculo: React.FC<AdicionarVersiculoProps> = ({
                 onClick={handleSaveDraft}
                 isDisabled={loading}
               >
-                {loading ? <Spinner size="sm" /> : 'Salvar como rascunho'}
+                {loading ? <Spinner size="sm" /> : "Salvar como rascunho"}
               </Button>
             )}
             <Button
               variant="solid"
-              onClick={handlePublish}
+              onClick={draft ? handleUpdatePost : handlePublish}
               isDisabled={loading}
             >
-              {loading ? <Spinner size="sm" /> : (draft ? 'Atualizar e publicar' : 'Salvar e publicar')}
+              {loading ? (
+                <Spinner size="sm" />
+              ) : draft ? (
+                "Atualizar"
+              ) : (
+                "Salvar e publicar"
+              )}
             </Button>
           </Box>
         </ModalFooter>
