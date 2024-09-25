@@ -122,3 +122,5 @@ export const addFirestoreDraft = async (draft: Draft) => {
     console.error('Erro ao adicionar rascunho ao Firestore:', error);
   }
 };
+
+

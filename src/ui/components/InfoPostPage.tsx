@@ -119,7 +119,6 @@ export default function InfoPostPage(props: InfoDraftProps): JSX.Element {
                     variant="ghost"
                   />
                   {/* <Text fontSize="sm" mt={1}>{post.likes || 0}</Text> */}
-                  {/* <Text fontSize="sm" mt={1}>{post.text}</Text> */}
                 </Box>
                 <Box textAlign="center" color="white">
                   <IconButton
@@ -129,7 +128,6 @@ export default function InfoPostPage(props: InfoDraftProps): JSX.Element {
                     variant="ghost"
                   />
                   {/* <Text fontSize="sm" mt={1}>{post.comments || 0}</Text> */}
-                  {/* <Text fontSize="sm" mt={1}>{post.text}</Text> */}
                 </Box>
               </Box>
             </Box>
